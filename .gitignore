@@ -1,0 +1,6 @@
+Articles
+Documents
+*.ods
+**/.ipynb_checkpoints
+**/Datasets/
+**/Figures/
