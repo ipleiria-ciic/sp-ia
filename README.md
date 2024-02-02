@@ -12,7 +12,7 @@
 
 This repository is part of the SP-IA project, focusing on Secure and Privacy-Preserving Machine Learning. The main objectives of this project include:
 
-- Conducting a comprehensive survey on the security and privacy risks associated with various machine learning techniques.
+- Conducting a survey on the security and privacy risks associated with various machine learning techniques.
 - Analyzing and proposing potential countermeasures to enhance security and privacy protection.
 - Selecting, implementing, and experimentally evaluating alternative approaches.
 - Preparing a final report and scientific papers in a suitable format for publication.
