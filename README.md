@@ -25,7 +25,7 @@ This repository covers a diverse range of resources and materials that have been
 - **NB01-1023**: Contains multiple Jupyter Notebooks introducing the subject of computer vision.
 - **NB02-1123**: Includes several Jupyter Notebooks for MNIST training, along with subsequent attacks (OnePixel Attack, FGSM, and Poisoning).
 - **NB03-1223**: Presents a variety of Jupyter Notebooks introducing GANs and DCGANs.
-- **NB04-0124**: Describes the process of creating a GAN capable of generating adversarial images to deceive a specific trained model.
+- **NB04-0124**: Describes the process of generating an adversarial dataset using the [Imagewoof](https://github.com/fastai/imagenette) dataset alongside the FGSM attack.
 
 ### Acknowledgements
 
