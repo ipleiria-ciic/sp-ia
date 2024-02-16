@@ -28,6 +28,7 @@ This repository covers a diverse range of resources and materials that have been
 - **NB04-0124**: Describes the process of generating an adversarial dataset using the [Imagewoof](https://github.com/fastai/imagenette) dataset alongside the FGSM attack.
 - **NB05-0224**: Jupyter Notebooks with Python library [FoolBox](https://github.com/bethgelab/foolbox/) implementation.
 - **NB06-0224**: This collection comprises various notebooks featuring tutorials and miscellaneous content dedicated to PyTorch, encompassing fundamental concepts and advanced techniques for effective usage.
+- **NB07-0224**: Includes Jupyter Notebooks for training Imagewoof in PyTorch, utilizing fine-tuning of the ConvNeXtTiny model.
 
 ### Acknowledgements
 
