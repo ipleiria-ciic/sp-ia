@@ -1,6 +1,7 @@
 import torch
-import torch.nn as nn
+import datetime
 import numpy as np
+import torch.nn as nn
 
 def cal_loss(loader, model, delta, loss_function):
     """
@@ -86,8 +87,10 @@ def uap_sga(model, loader, nb_epoch, eps, beta=9, step_decay=0.1, loss_function=
 
     batch_delta.requires_grad_()
     v = 0
+    print("")
     for epoch in range(nb_epoch):
-        print('Epoch %i/%i' % (epoch + 1, nb_epoch))
+        start_time = datetime.datetime.now()
+        print('[STR] Epoch %i/%i' % (epoch + 1, nb_epoch))
 
         # Perturbation step size with decay
         eps_step = eps * step_decay
@@ -142,5 +145,8 @@ def uap_sga(model, loader, nb_epoch, eps, beta=9, step_decay=0.1, loss_function=
 
         loss = cal_loss(loader_eval, model, delta.data, loss_function)
         losses.append(torch.mean(loss.data).cpu())
-        
+
+        end_time = datetime.datetime.now()        
+        print(f'[END] Epoch {epoch + 1}/{nb_epoch} - Time Consumed: {end_time - start_time}')        
+    
     return delta.data, losses

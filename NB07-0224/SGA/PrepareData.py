@@ -60,7 +60,7 @@ def create_dataset_npy(train_path, num_classes, len_batch=10000, model_dimension
     # Sort the directory in alphabetical order
     dirs = sorted(dirs)
     it = 0
-    Matrix = [0 for x in range(1000)]
+    Matrix = [0 for x in range(len_batch)]
 
     for d in dirs:
         for _, _, filename in os.walk(d):
@@ -70,13 +70,15 @@ def create_dataset_npy(train_path, num_classes, len_batch=10000, model_dimension
     it = 0
 
     # Load images, pre-process, and save
+    print('[INFO] Processing images...')
     for k in range(num_classes):
         for u in range(num_imgs_per_batch):
-            print('[INFO] Processing image number ', it)
+            print(it)
             path_img = os.path.join(dirs[k], Matrix[k][u])
             image = preprocess_image(path_img, model_dimension, center_crop)
             im_array[it:(it+1), :, :, :] = image
             it = it + 1
-    
+
+    print('[INFO] Processing images phase completed!')
     imageset = im_array
     return imageset

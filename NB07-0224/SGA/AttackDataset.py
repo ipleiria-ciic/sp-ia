@@ -13,23 +13,32 @@ def main() -> None:
     # Initial parameters
     dir_uap = './UAP/SGA/'
     # Always the absolute path.. relative path will not work!
-    data_dir = '/home/joseareia/Documents/SPIA/NB07-0224/Datasets/Imagewoof/train/'
+    dir_data = '/home/joseareia/Documents/SPIA/NB07-0224/Datasets/Imagewoof/train/'
     model_name = 'vgg16'
     model_dimension = 256
     center_crop = 224
-    num_images = 100
-    batch_size = 4
-    minibatch = 1
-    epoch = 10
-    alpha = 2
-    beta = 2
+    num_images = 9000
+    batch_size = 8
+    minibatch = 4
+    epoch = 20
+    alpha = 10
+    beta = 10
     step_decay = 0.1
     cross_loss = 0
     iter = 4
     momentum = 0
+
+    # Display some parameters
+    print("***************************************")
+    print("[INFO] Model name:", model_name.upper())
+    print("[INFO] Number of images:", num_images)
+    print("[INFO] Batch size:", batch_size)
+    print("[INFO] Alpha:", alpha)
+    print("[INFO] Beta:", beta)
+    print("***************************************\n")
     
     # Load dataset
-    X = create_dataset_npy(data_dir, num_classes=10, len_batch=num_images, model_dimension=model_dimension, center_crop=center_crop)
+    X = create_dataset_npy(dir_data, num_classes=10, len_batch=num_images, model_dimension=model_dimension, center_crop=center_crop)
     torch.manual_seed(0)
 
     # Dataloader creation for both training and validation sets
@@ -49,7 +58,7 @@ def main() -> None:
     
     # Save delta value
     torch.save(delta, dir_uap + "Delta_%d_%d_Epochs_%d_Batch.pth" % (num_images, epoch + 1, batch_size))
-    print("[INFO] Saving delta values")
+    print("\n[INFO] Saving delta values")
 
     # Save loss value
     np.save(dir_uap + "Losses.npy", losses)
@@ -62,7 +71,7 @@ def main() -> None:
 
     # Time consumed
     end_time = datetime.datetime.now()
-    print("Time Consumed: ", end_time - start_time)
+    print("[INFO] Time Consumed: ", end_time - start_time)
 
 if __name__ == '__main__':
     main()

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torchvision
 
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torchvision.transforms import v2 as T
 from torchvision.datasets import ImageFolder
 
@@ -52,12 +52,13 @@ def model_def(model_name):
     return model
 
 # Dataloader for a given validation set
-def dataloader_validation(dir_data, batch_size=16, model_dimension=256,center_crop=224):
+def dataloader_validation(dir_data, num_images=3500, batch_size=16, model_dimension=256,center_crop=224):
     """
     Dataloader for a given validation set.
 
     Parameters:
     - dir_data: Directory of the **validation** set of a given dataset.
+    - num_images: Number of images to fetch from the validation set (DEFAULT=500).
     - batch_size: Batch size (DEFAULT=16).
     - model_dimension: Model acceptable input dimension (DEFAULT=256).
     - center_crop: Crop ensuring the that central region of the image is preserved (DEFAULT=224). 
@@ -77,6 +78,13 @@ def dataloader_validation(dir_data, batch_size=16, model_dimension=256,center_cr
     }
 
     val_dataset = ImageFolder(dir_data, data_transforms['val'])
+
+    # Random subset if not using the full 3500 validation set
+    if num_images < 3500:
+        np.random.seed(0)
+        sample_indices = np.random.permutation(range(3500))[:num_images]
+        val_dataset = Subset(val_dataset, sample_indices)
+
     dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     return dataloader
@@ -102,7 +110,7 @@ def evaluate(model, loader, uap=None, batch_size=None, device=None):
     - labels: Labels for each example.
     - y_outputs: N/A.
     """
-    probs, labels, y_out= [], [], []
+    probs, labels, y_out = [], [], []
     model.eval()
     
     if uap is not None:
