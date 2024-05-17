@@ -17,7 +17,7 @@ def main() -> None:
     model_name = 'vgg16'
     model_dimension = 256
     center_crop = 224
-    num_images = 9000
+    num_images = 5000
     batch_size = 8
     minibatch = 4
     epoch = 20
@@ -57,7 +57,7 @@ def main() -> None:
                        momentum=momentum, img_num=num_images)
     
     # Save delta value
-    torch.save(delta, dir_uap + "Delta_%d_%d_Epochs_%d_Batch.pth" % (num_images, epoch + 1, batch_size))
+    torch.save(delta, dir_uap + "Delta_%d_%d_Epochs_%d_Batch.pth" % (num_images, epoch, batch_size))
     print("\n[INFO] Saving delta values")
 
     # Save loss value

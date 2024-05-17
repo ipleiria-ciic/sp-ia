@@ -8,13 +8,13 @@ def main() -> None:
 
     # Initial parameters
     device = torch.device("cuda:0")
-    dir_uap = './UAP/SGA/Delta_100_11_Epochs_4_Batch.pth'
+    dir_uap = './UAP/SGA/Delta_5000_20_Epochs_8_Batch.pth'
     # Always the absolute path.. relative path will not work!
-    dir_data = '/home/joseareia/Documents/SPIA/NB07-0224/Datasets/Imagewoof/train/'
+    dir_data = '/home/joseareia/Documents/SPIA/NB07-0224/Datasets/Imagewoof/val/'
     model_name = 'vgg16'
     model_dimension = 256
     center_crop = 224
-    num_images = 1000
+    num_images = 3000
     batch_size = 8
 
     # Dataloader creation for the validation set

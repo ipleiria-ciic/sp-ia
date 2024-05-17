@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
+import matplotlib.pyplot as plt
 
 from torch.utils.data import DataLoader, Subset
 from torchvision.transforms import v2 as T
@@ -110,7 +111,7 @@ def evaluate(model, loader, uap=None, batch_size=None, device=None):
     - labels: Labels for each example.
     - y_outputs: N/A.
     """
-    probs, labels, y_out = [], [], []
+    probs, labels, y_out, img_p = [], [], [], []
     model.eval()
     
     if uap is not None:
@@ -131,18 +132,24 @@ def evaluate(model, loader, uap=None, batch_size=None, device=None):
             probs.append(out.cpu().numpy())
             labels.append(y_val.cpu())
             y_out.append(y_ori.cpu().numpy())
+            
+            # Store the images that goes to model evaluation
+            img_p.append(perturbed)
 
     # Convert batches to single numpy arrays
     probs = np.array([p for l in probs for p in l])
     labels = np.array([t for l in labels for t in l])
     y_out = np.array([s for l in y_out for s in l])
 
+    # Save the images in a PyTorch Tensor
+    torch.save(img_p, './UAP/SGA/Perturbed.pt')
+
     # Extract top 5 predictions for each example
-    top = np.argpartition(-probs, 5, axis = 1)[:,:5]
+    top = np.argpartition(-probs, 5, axis=1)[:,:5]
     top_probs = probs[np.arange(probs.shape[0])[:, None], top].astype(np.float32)
-    top1acc = top[range(len(top)), np.argmax(top_probs, axis = 1)] == labels
+    top1acc = top[range(len(top)), np.argmax(top_probs, axis=1)] == labels
     top5acc = [labels[i] in row for i, row in enumerate(top)]
-    outputs = top[range(len(top)), np.argmax(top_probs, axis = 1)]
+    outputs = top[range(len(top)), np.argmax(top_probs, axis=1)]
 
     y_top = np.argpartition(-y_out, 5, axis=1)[:, :5]
     y_top_probs = y_out[np.arange(y_out.shape[0])[:, None], y_top].astype(np.float32)
