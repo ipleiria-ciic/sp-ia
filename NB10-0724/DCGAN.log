@@ -1,0 +1,14 @@
+### Try 001 --- 2024-07-26 12:34
+Workers: 2
+Batch size: 64
+Image size: 64
+Size of the latent space: 100
+Size of feature maps in generator: 64
+Size of feature maps in discriminator: 64
+Number of epochs: 5
+Learning rate: 0.0002
+Beta1 hyperparameter for the Adam optimizer: 0.5
+Training time: 25min 5s
+Loss (G): 5 ~ 11
+Loss (D): 4 ~ 7
+
