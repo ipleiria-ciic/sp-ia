@@ -31,6 +31,7 @@ This repository covers a diverse range of resources and materials that have been
 - **NB07-0224**: Includes Jupyter Notebooks for training Imagewoof in PyTorch, utilizing fine-tuning of the ConvNeXtTiny model.
 - **NB08-0624**: Contains a variety of content for gradient studying and understanding.
 - **NB09-0724**: Presents two Jupyter Notebooks that analyze the [TRM-UAP](https://github.com/RandolphCarter0/TRMUAP) attack and debug it.
+- **NB10-0724**: A variety of Jupyter Notebooks introducing and developing DCGANs for adversarial attacks.
 - **PY01-0724**: Includes complete code for exporting and creating an image dataset regarding the perturbations generated using the [TRM-UAP](https://github.com/RandolphCarter0/TRMUAP) attack.
 
 ### Acknowledgements
