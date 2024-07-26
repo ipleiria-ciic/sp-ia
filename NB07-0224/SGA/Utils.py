@@ -126,7 +126,8 @@ def evaluate(model, loader, uap=None, batch_size=None, device=None):
                 out = torch.nn.functional.softmax(model(x_val), dim = 1)
             else:
                 y_ori = torch.nn.functional.softmax(model(x_val), dim = 1)
-                perturbed = torch.clamp((x_val + uap), 0, 1) # Clamp to [0, 1]
+                # perturbed = torch.clamp((x_val + uap), 0, 1) # Clamp to [0, 1]
+                perturbed = x_val + uap
                 out = torch.nn.functional.softmax(model(perturbed), dim = 1)
 
             probs.append(out.cpu().numpy())
@@ -142,7 +143,7 @@ def evaluate(model, loader, uap=None, batch_size=None, device=None):
     y_out = np.array([s for l in y_out for s in l])
 
     # Save the images in a PyTorch Tensor
-    torch.save(img_p, './UAP/SGA/Perturbed.pt')
+    torch.save(img_p, './UAP/SGA/Perturbed_NOCLAMP.pt')
 
     # Extract top 5 predictions for each example
     top = np.argpartition(-probs, 5, axis=1)[:,:5]
