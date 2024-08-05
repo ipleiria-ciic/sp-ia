@@ -269,7 +269,7 @@ if __name__ == '__main__':
 
     # --- Parameters ----------------------------------------------------------
     n_epochs = 200
-    number_of_trials = 100
+    number_of_trials = 50
     random_seed = 1
     latent_size = 100
     number_channels = 3
@@ -290,7 +290,8 @@ if __name__ == '__main__':
         direction="minimize",
         load_if_exists=True
     )
-    study.optimize(objective, n_trials=number_of_trials, timeout=600)
+
+    study.optimize(objective, n_trials=number_of_trials)
 
     print(f"[INFO] GAN Trained. Time taken: {time.time() - start_time:.2f} seconds")
 

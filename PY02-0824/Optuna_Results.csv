@@ -1,2 +1,2 @@
-number,value,params_batch_size,params_beta1,params_learning_rate
-0,2.277723900885155,27,0.633918398173721,0.00047631219360332657
+number,value,params_batch_size,params_beta1,params_learning_rate,params_patience
+0,5.404462390946216,37,0.728942688978254,5.662110696444242e-05,12
