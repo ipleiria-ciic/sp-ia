@@ -220,6 +220,7 @@ def objective(trial):
     learning_rate = trial.suggest_float('learning_rate', 1e-5, 1e-3, log=True)
     batch_size = trial.suggest_int('batch_size', 16, 64, log=True)
     beta1 = trial.suggest_float('beta1', 0.5, 0.9)
+    patience = trial.suggest_int('patience', 5, 15, log=True)
 
     dataset = get_dataset(dataroot='../Datasets/TRM-UAP')
 
@@ -237,8 +238,10 @@ def objective(trial):
 
     criterion = nn.BCELoss()
 
-    schedulerD = optim.lr_scheduler.ReduceLROnPlateau(optimizerD, mode='min', factor=0.2, patience=5, min_lr=1e-6, verbose=True)
-    schedulerG = optim.lr_scheduler.ReduceLROnPlateau(optimizerG, mode='min', factor=0.2, patience=5, min_lr=1e-6, verbose=True)
+    min_lr = learning_rate / 10
+
+    schedulerD = optim.lr_scheduler.ReduceLROnPlateau(optimizerD, mode='min', factor=0.2, patience=patience, min_lr=min_lr, verbose=True)
+    schedulerG = optim.lr_scheduler.ReduceLROnPlateau(optimizerG, mode='min', factor=0.2, patience=patience, min_lr=min_lr, verbose=True)
 
     early_stopping = Utils.EarlyStopping(patience=20, verbose=True)
 
@@ -266,7 +269,6 @@ if __name__ == '__main__':
 
     # --- Parameters ----------------------------------------------------------
     n_epochs = 200
-    batch_size_train = 64
     number_of_trials = 100
     random_seed = 1
     latent_size = 100
