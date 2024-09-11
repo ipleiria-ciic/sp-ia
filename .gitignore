@@ -9,3 +9,5 @@ Datasets
 **/data/
 **/UAP/
 **/*.mp4
+**/*.pth
+NB10-0724/Outputs
