@@ -242,15 +242,15 @@ def export_images(batch_index, output_path, global_counter):
     
     start_time = time.time()
 
-    adv_images_path = f'Dataset/Intermediate/ADV_Images/Adv_Images_{batch_index}.pt'
-    adv_classes_path = f'Dataset/Intermediate/ADV_Classes/Adv_Classes_{batch_index}.pt'
-    ori_classes_path = f'Dataset/Intermediate/ORI_Classes/Ori_Classes_{batch_index}.pt'
+    adv_images_path = f'TRM_Dataset/Intermediate/ADV_Images/Adv_Images_{batch_index}.pt'
+    adv_classes_path = f'TRM_Dataset/Intermediate/ADV_Classes/Adv_Classes_{batch_index}.pt'
+    ori_classes_path = f'TRM_Dataset/Intermediate/ORI_Classes/Ori_Classes_{batch_index}.pt'
 
     AdversarialImages = torch.load(adv_images_path)
     AdversarialClasses = torch.load(adv_classes_path)
     OriginalClasses = torch.load(ori_classes_path)
 
-    with open(os.path.join(output_path, 'AdversarialClasses_Mapping.txt'), 'a') as f:  # Append mode
+    with open('TRM_Dataset/AdversarialClasses_Mapping.txt', 'a') as f:  # Append mode
         for adv_image, ori_class, adv_class in zip(AdversarialImages, OriginalClasses, AdversarialClasses):
             img = ToPILImage()(adv_image)
 
