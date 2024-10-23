@@ -19,7 +19,7 @@ import torch
 dataset = '../Datasets/ImageNet100/Train'
 uap_per = 'UAP/UAP_VGG16.npy'
 model_n = 'VGG16'
-save_path = 'Dataset/Intermediate'
+save_path = 'Dataset/Intermediate-2'
 batch_size = 2
 num_images = 50000
 chunk_size = 2000
@@ -51,24 +51,29 @@ delta = torch.clamp(uap, -10/255, 10/255)
 
 adv_images = []
 adv_classes = []
+ori_images = []
 ori_classes = []
 batch_count = 0
 image_count = 0
 
 for batch in dataloader:
-    adv_images_batch, adv_classes_batch, ori_classes_batch = get_adversarial_images(model, delta, [batch], device)
+    adv_images_batch, adv_classes_batch, ori_classes_batch, ori_images_batch = get_adversarial_images(model, delta, [batch], device)
+    
     adv_images.extend(adv_images_batch)
     adv_classes.extend(adv_classes_batch)
     ori_classes.extend(ori_classes_batch)
+    ori_images.extend(ori_images_batch)
 
     if len(adv_images) * batch_size >= chunk_size:
         torch.save(torch.cat(adv_images), os.path.join(save_path, f'Adv_Images_{batch_count}.pt'))
         torch.save(torch.cat(adv_classes), os.path.join(save_path, f'Adv_Classes_{batch_count}.pt'))
         torch.save(torch.cat(ori_classes), os.path.join(save_path, f'Ori_Classes_{batch_count}.pt'))
+        torch.save(torch.cat(ori_images), os.path.join(save_path, f'Ori_Images_{batch_count}.pt'))
 
         adv_images.clear()
         adv_classes.clear()
         ori_classes.clear()
+        ori_images.clear()
 
         batch_count += 1
 
@@ -83,3 +88,4 @@ if adv_images:
     torch.save(torch.cat(adv_images), os.path.join(save_path, f'Adv_Images_{batch_count}.pt'))
     torch.save(torch.cat(adv_classes), os.path.join(save_path, f'Adv_Classes_{batch_count}.pt'))
     torch.save(torch.cat(ori_classes), os.path.join(save_path, f'Ori_Classes_{batch_count}.pt'))
+    torch.save(torch.cat(ori_images), os.path.join(save_path, f'Ori_Images_{batch_count}.pt'))

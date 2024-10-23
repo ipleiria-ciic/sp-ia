@@ -175,6 +175,7 @@ def get_adversarial_images(model, delta, dataloader, device):
 
     adv_dataset = []
     adv_classes = []
+    ori_images = []
     ori_classes = []
     
     model.eval()    
@@ -197,11 +198,12 @@ def get_adversarial_images(model, delta, dataloader, device):
                 adv_dataset.append(adv_images[misclassified_indices].cpu())
                 adv_classes.append(adv_predicted[misclassified_indices].cpu())
                 ori_classes.append(labels[misclassified_indices].cpu())
+                ori_images.append(images[misclassified_indices].cpu())
                 
             del images, labels, outputs, adv_images, adv_outputs, predicted, adv_predicted
             torch.cuda.empty_cache()
                 
-    return adv_dataset, adv_classes, ori_classes
+    return adv_dataset, adv_classes, ori_classes, ori_images
 
 
 def load_chunks(path, prefix):
@@ -242,27 +244,37 @@ def export_images(batch_index, output_path, global_counter):
     
     start_time = time.time()
 
-    adv_images_path = f'TRM_Dataset/Intermediate/ADV_Images/Adv_Images_{batch_index}.pt'
-    adv_classes_path = f'TRM_Dataset/Intermediate/ADV_Classes/Adv_Classes_{batch_index}.pt'
-    ori_classes_path = f'TRM_Dataset/Intermediate/ORI_Classes/Ori_Classes_{batch_index}.pt'
+    adv_images_path = f'Dataset/Intermediate-2/ADV_Images/Adv_Images_{batch_index}.pt'
+    adv_classes_path = f'Dataset/Intermediate-2/ADV_Classes/Adv_Classes_{batch_index}.pt'
+    ori_classes_path = f'Dataset/Intermediate-2/ORI_Classes/Ori_Classes_{batch_index}.pt'
+    ori_images_path = f'Dataset/Intermediate-2/ORI_Images/Ori_Images_{batch_index}.pt'
 
     AdversarialImages = torch.load(adv_images_path)
     AdversarialClasses = torch.load(adv_classes_path)
     OriginalClasses = torch.load(ori_classes_path)
+    OriginalImages = torch.load(ori_images_path)
 
-    with open('TRM_Dataset/AdversarialClasses_Mapping.txt', 'a') as f:  # Append mode
-        for adv_image, ori_class, adv_class in zip(AdversarialImages, OriginalClasses, AdversarialClasses):
-            img = ToPILImage()(adv_image)
+    with open('Dataset/AdversarialClasses_Mapping-2.txt', 'a') as f:  # Append mode
+        for adv_image, ori_class, adv_class, ori_image in zip(AdversarialImages, OriginalClasses, AdversarialClasses, OriginalImages):
+            img_adv = ToPILImage()(adv_image) # Adversarial image
+            img_ori = ToPILImage()(ori_image) # Original image
 
-            name = f'{global_counter:05d}_{ori_class.item():04d}'
-            extension = 'png'
+            # Original image process
+            name_ori_image = f'ORI_{global_counter:05d}_{ori_class.item():04d}'
+            extension_ori_image = 'png'
+            filename_ori_image = f'{name_ori_image}.{extension_ori_image}'
+            img_path_ori = os.path.join(output_path, filename_ori_image)
+            img_ori.save(img_path_ori)
 
-            filename = f'{name}.{extension}'
-            img_path = os.path.join(output_path, filename)
+            # Adversarial image process 
+            name_adv_image = f'ADV_{global_counter:05d}_{adv_class.item():04d}'
+            extension_adv_image = 'png'
+            filename_adv_image = f'{name_adv_image}.{extension_adv_image}'
+            img_path_adv = os.path.join(output_path, filename_adv_image)
+            img_adv.save(img_path_adv)
 
-            img.save(img_path)
-
-            f.write(f'{name}::{adv_class.item():04d}\n')
+            f.write(f'{name_ori_image}\n')
+            f.write(f'{name_adv_image}::{ori_class.item():04d}\n')
             
             global_counter += 1
 
