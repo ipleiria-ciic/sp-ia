@@ -3,7 +3,7 @@
 ---
 
 <p align="center">
-    <img src="Assets/CIIC-FCT.png" width="95%"/>
+    <img src="Assets/CIIC-FCT.png" width="85%"/>
 </p>
 
 ---
