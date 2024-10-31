@@ -29,4 +29,4 @@ This repository covers a diverse range of resources and materials that have been
 
 ### Acknowledgements
 
-This work is funded by [FCT - Fundação para a Ciência e a Tecnologia, I.P.](https://www.fct.pt/), through the project UIDB/04524/2020.
+This work is funded by [FCT](https://www.fct.pt/), through the project UIDB/04524/2020.
