@@ -1,0 +1,219 @@
+### 1º Tentativa (16/07/2024 11:56)
+- Set de validação: 	Imagewoof (3292)
+- Tamanho do batch:		2
+- Modelo alvo: 			VGG-19
+- Modelo substituto: 	VGG-16
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				00:05:18
+- Resultado (RA): 		95.57%
+- Comparação artigo:	RA - 89.82% = 5.75%
+
+
+### 2º Tentativa (16/07/2024 12:15)
+- Set de validação: 	Imagewoof (3292)
+- Tamanho do batch:		2
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				00:05:18
+- Resultado (RA):		29.70%
+- Comparação artigo:	RA - 67.46% = -37.76%
+
+
+### 3º Tentativa (16/07/2024 14:38)
+- Set de validação: 	ImageNet (50000)
+- Tamanho do batch:		2
+- Modelo alvo: 			VGG-19
+- Modelo substituto: 	VGG-16
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				00:11:09
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 4º Tentativa (16/07/2024 14:50)
+- Set de validação: 	ImageNet (50000)
+- Tamanho do batch:		2
+- Modelo alvo: 			VGG-19
+- Modelo substituto: 	VGG-16
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				00:07:06
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 5º Tentativa (16/07/2024 15:02)
+- Set de validação: 	ImageNet (30000)
+- Tamanho do batch:		2
+- Modelo alvo: 			VGG-19
+- Modelo substituto: 	VGG-16
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				01:28:34
+- Resultado (RA): 		83.61%
+- Comparação artigo:	RA - 89.82% = -6.21%
+
+### 6º Tentativa (16/07/2024 16:37)
+- Set de validação: 	ImageNet (30000)
+- Tamanho do batch:		2
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				00:00:00
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 7º Tentativa (16/07/2024 16:52)
+- Set de validação: 	ImageNet (20000)
+- Tamanho do batch:		2
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				00:00:00
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 8º Tentativa (17/07/2024 09:29)
+- Set de validação: 	ImageNet (10000)
+- Tamanho do batch:		2
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				00:00:00
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 9º Tentativa (17/07/2024 11:42)
+- Set de validação: 	ImageNet (10000)
+- Tamanho do batch:		1
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				01:23:54
+- Resultado (RA): 		18.51%
+- Comparação artigo:	RA - 67.46% = -48.95%
+
+### 10º Tentativa (17/07/2024 13:05)
+- Set de validação: 	ImageNet (10000)
+- Tamanho do batch:		1
+- Modelo alvo: 			ResNet152
+- Modelo substituto: 	VGG-16
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				00:09:24
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 11º Tentativa (17/07/2024 13:15)
+- Set de validação: 	ImageNet (8500)
+- Tamanho do batch:		1
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	VGG-16
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				01:41:32
+- Resultado (RA): 		40.17%
+- Comparação artigo:	RA - 77.20% = -37.03%
+
+### 12º Tentativa (17/07/2024 14:59)
+- Set de validação: 	ImageNet (30000)
+- Tamanho do batch:		2
+- Modelo alvo: 			VGG-16
+- Modelo substituto: 	VGG-16
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				01:19:03
+- Resultado (RA): 		90.24%
+- Comparação artigo:	RA - 94.30% = -4.06%
+
+### 13º Tentativa (17/07/2024 16:54)
+- Set de validação: 	ImageNet (30000)
+- Tamanho do batch:		2
+- Modelo alvo: 			VGG-19
+- Modelo substituto: 	VGG-19
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				01:32:26
+- Resultado (RA): 		87.68%
+- Comparação artigo:	RA - 91.35% = -3.67%
+
+### 14º Tentativa (18/07/2024 09:12)
+- Set de validação: 	ImageNet (30000)
+- Tamanho do batch:		2
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.3
+- Duração: 				00:00:00
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 15º Tentativa (18/07/2024 09:58)
+- Set de validação: 	ImageNet (30000)
+- Tamanho do batch:		1
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.2
+- Duração: 				00:00:00
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 16º Tentativa (18/07/2024 10:42)
+- Set de validação: 	ImageNet (10000)
+- Tamanho do batch:		1
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.2
+- Duração: 				00:00:00
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 17º Tentativa (19/07/2024 10:11)
+- Set de validação: 	ImageNet (5000)
+- Tamanho do batch:		1
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.1
+- Duração: 				00:00:00
+- Resultado (RA): 		ERRO - CUDA OUT OF MEMORY
+
+### 18º Tentativa (19/07/2024 11:47)
+- Set de validação: 	ImageNet (5000)
+- Tamanho do batch:		1
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.2
+- Duração: 				01:53:12
+- Resultado (RA): 		18.77%
+- Comparação artigo:	RA - 67.46% = -48.69%
+
+### 19º Tentativa (19/07/2024 13:58)
+- Set de validação: 	ImageNet (1000)
+- Tamanho do batch:		1
+- Modelo alvo: 			ResNet-152
+- Modelo substituto: 	ResNet-152
+- Proporção positiva:	0.8
+- Proporção negativa:	0.7
+- Learning rate UAP:	0.5
+- Duração: 				01:37:21
+- Resultado (RA): 		15.75%
+- Comparação artigo:	RA - 67.46% = -51.71%

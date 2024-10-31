@@ -1,0 +1,54 @@
+AMBIENTE:
+- Python 3.6.13
+- Ubuntu 22.04
+- Pip 23.3.1
+- CUDA 12.3
+- Driver Version (Nvidia) 545.23.08
+
+####### 1º Problema (10:14):
+- Ao correr o ataque através do "train.py" como é indicado no GitHub dos autores, o mesmo dá o seguinte erro:
+
+Traceback (most recent call last):
+  File "train.py", line 130, in <module>
+    main()
+  File "train.py", line 58, in main
+    help='the range prior of perturbations')
+  File "/home/joseareia/miniconda3/envs/trm-env/lib/python3.6/argparse.py", line 1343, in add_argument
+    raise ValueError('%r is not callable' % (type_func,))
+ValueError: 'str' is not callable
+
+- Este erro foi ultrupassado após ser removido as plicas do str na linha 57 do "train.py".
+
+####### 2º Problema (10:28):
+- Depois da resolução do 1º problema, corri o "train.py", ao qual fez o download dos modelos que estou a utilizar para testar "vgg16" e "vgg19".
+- Depois de fazer o download dos modelos este erro aparece:
+
+Traceback (most recent call last):
+  File "train.py", line 130, in <module>
+    main()
+  File "train.py", line 109, in main
+    uap = truncated_ratio_maximization(model, args, device,prior=args.prior)
+  File "/home/joseareia/Documents/TRMUAP/trmuap.py", line 240, in truncated_ratio_maximization
+    val_loader,_ = get_data_loader(args.val_dataset_name, batch_size=args.batch_size)#,shuffle=True
+  File "/home/joseareia/Documents/TRMUAP/functions.py", line 107, in get_data_loader
+    train_dataset, test_dataset = torch.utils.data.random_split(val_dataset, [1000, 49000])
+  File "/home/joseareia/miniconda3/envs/trm-env/lib/python3.6/site-packages/torch/utils/data/dataset.py", line 276, in random_split
+    raise ValueError("Sum of input lengths does not equal the length of the input dataset!")
+ValueError: Sum of input lengths does not equal the length of the input dataset!
+
+- Segundo fonte online (https://github.com/BraTS-inpainting/2023_challenge/issues/1) este erro tem haver com a versão do pytorch que suporta esta versão, i.e., suporte para ratios foi adicionado na versão 1.13 do pytorch e a versão que é utilizada nesta aplicação é a 1.12
+
+- Como resolver...? Não sei ainda ;-;
+
+- Afinal o torch que esta nos requirements é o 1.6.0, mas no GitHub está o valor 1.12.0... Vou reinstalar o torch!
+
+- Algo não está certo: o pytorch==1.12.0 é apenas suportado para versões Python acima do 3.7 e no repositório eles utilizam a versão 3.6.13! E para além disso, mencionam que utilizam a versão torch 1.12.0 com essa versão de Python, o que me parece impossível... até porque têm outra versão diferente no requirements.txt do repositório!
+
+- O erro é possivelmente também do facto da soma do array [1000, 49000] não ser exatamente igual ao valor total do validation set. Por isso troquei os valores para [80, 3849] onde a soma total é igual ao valor do validation set do imagewoof (3929). O erro foi resolvido assim! 
+
+- Para este problema dois esta informação pode vir a ser útil
+
+	### 3929   -> Validation set for the Imagewoof
+    ### 130000 -> Validation set for the ImageNet100
+    
+

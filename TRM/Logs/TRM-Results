@@ -1,0 +1,28 @@
+### 1º Tentativa (16/07/2024 11:56)
+- Set de validação: Imagewoof (3292)
+- Modelo alvo: VGG19
+- Modelo substituto: VGG16
+- Comando: python train.py --surrogate_model vgg16 --target_model vgg19 --val_dataset_name imagenet --p_active --n_active --p_rate 0.8 --n_rate 0.7
+
+- Duração: 5 minutos e 18 segundos
+- Resultado: "the FR of UAP (vgg16) on (vgg19) is 0.9557139221175872"
+- Comentário: Este resultado (para este subset do dataset imagenet) apresenta melhores resultados do que o exposto no artigo (89.82%)
+
+### 2º Tentativa (16/07/2024 12:15)
+- Set de validação: Imagewoof (3292)
+- Modelo alvo: ResNet152
+- Modelo substituto: ResNet152
+- O seguinte comando foi utilizado:
+python train.py --surrogate_model resnet152
+				--target_model resnet152 
+				--val_dataset_name imagenet
+				--p_active
+				--n_active
+				--p_rate 0.8
+				--n_rate 0.7
+- O treino demorou 5 minutos e 08 segundos
+- O resultado foi: "the FR of UAP (resnet152) on (resnet152) is 0.2970221430389412"
+- Este resultado foi bastante pior do que o obtido no artigo deles (67.46%)
+
+### 3º Tentativa (16/07/2024 14:38)
+
