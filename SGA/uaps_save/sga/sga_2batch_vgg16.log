@@ -1,0 +1,22 @@
+Namespace(data_dir='/../imagent/val/', uaps_save='./uaps_save/sga/sga_50_10epoch_2batch.pth', batch_size=2, model_name='vgg16')
+Traceback (most recent call last):
+  File "/home/joseareia/Documents/SGA/imagenet_eval.py", line 44, in <module>
+    main(parse_arguments(sys.argv[1:]))
+  File "/home/joseareia/Documents/SGA/imagenet_eval.py", line 19, in main
+    loader = loader_imgnet(dir_data, 50000, batch_size, model_dimension,center_crop)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/joseareia/Documents/SGA/utils.py", line 74, in loader_imgnet
+    val_dataset = ImageFolder(dir_data, val_transform)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/joseareia/miniconda3/lib/python3.11/site-packages/torchvision/datasets/folder.py", line 309, in __init__
+    super().__init__(
+  File "/home/joseareia/miniconda3/lib/python3.11/site-packages/torchvision/datasets/folder.py", line 144, in __init__
+    classes, class_to_idx = self.find_classes(self.root)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/joseareia/miniconda3/lib/python3.11/site-packages/torchvision/datasets/folder.py", line 218, in find_classes
+    return find_classes(directory)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/joseareia/miniconda3/lib/python3.11/site-packages/torchvision/datasets/folder.py", line 40, in find_classes
+    classes = sorted(entry.name for entry in os.scandir(directory) if entry.is_dir())
+                                             ^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/../imagent/val/'
