@@ -1,9 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
 import torch.nn.utils
-
 
 class ResidualBlock(nn.Module):
     """Residual Block with instance normalization."""
@@ -19,12 +17,10 @@ class ResidualBlock(nn.Module):
     def forward(self, x):
         return x + self.main(x)
 
-
 class Generator(nn.Module):
     """Generator network."""
     def __init__(self, conv_dim=64, c_dim=5, repeat_num=6):
         super(Generator, self).__init__()
-
         layers = []
         layers.append(nn.Conv2d(3+c_dim, conv_dim, kernel_size=7, stride=1, padding=3, bias=False))
         layers.append(nn.InstanceNorm2d(conv_dim, affine=True, track_running_stats=True))
@@ -63,7 +59,7 @@ class Generator(nn.Module):
         return self.main(x)
 
 
-class Discriminator(nn.Module):  ## spectral norm version
+class Discriminator(nn.Module):
     """Discriminator network with PatchGAN."""
     def __init__(self, image_size=128, conv_dim=64, c_dim=5, repeat_num=6):
         super(Discriminator, self).__init__()
