@@ -1,6 +1,6 @@
 #!/bin/sh
 
-python main.py --mode test \
+python src/main.py --mode test \
     --dataset ImageNet \
     --attr_path ../Datasets/ImageNet5/image_data.txt \
     --c_dim 2 \
