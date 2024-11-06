@@ -357,39 +357,24 @@ class Solver(object):
         """Translate images using StarGAN trained on a single dataset."""
         # Load the trained generator.
         self.restore_model(self.test_iters)
-
+        
         # Set data loader.
         data_loader = self.imagenet_loader
-
+        
         with torch.no_grad():
             for i, (x_real, c_org) in enumerate(data_loader):
                 # Prepare input images and target domain labels.
                 x_real = x_real.to(self.device)
-                c_trg_list = self.create_labels(c_org, self.c_dim, self.selected_attrs)
-            
+                c_trg_list = self.create_labels(c_org, self.c_dim, self.dataset, self.selected_attrs)
                 # Translate images.
-                # x_fake_list = []
-                # for c_trg in c_trg_list:
-                #    x_fake_list.append(self.G(x_real, c_trg))
-                    
-                # print(f"[DEBUG] x_fake_list: {x_fake_list}")
-                # break
-            
-                for j, c_trg in enumerate(c_trg_list):
-                    x_fake = self.G(x_real, c_trg)
-                    
-                    for k in enumerate(x_fake):
-                        # print(k)
-                        result_path = os.path.join(self.result_dir, f'{j+1}_image.jpg')
-                        save_image(self.denorm(k.cpu()), result_path, nrow=1, padding=0)
-                        print(f'Saved translated image into {result_path}...')
-            
+                x_fake_list = [] 
+                for c_trg in c_trg_list:
+                    x_fake_list.append(self.G(x_real, c_trg))
                 # Save the translated images.
-                # x_concat = torch.cat(x_fake_list, dim=3)
-                # result_path = os.path.join(self.result_dir, '{}-images.jpg'.format(i+1))
-                # save_image(self.denorm(x_concat.data.cpu()),
-                #          result_path, nrow=1, padding=0)
-                # print('Saved real and fake images into {}...'.format(result_path))
+                x_concat = torch.cat(x_fake_list, dim=3)
+                result_path = os.path.join(self.result_dir, '{}-images.jpg'.format(i+1))
+                save_image(self.denorm(x_concat.data.cpu()), result_path, nrow=1, padding=0)
+                print('Saved real and fake images into {}...'.format(result_path))
 
 
 class HingeLoss(torch.nn.Module):
