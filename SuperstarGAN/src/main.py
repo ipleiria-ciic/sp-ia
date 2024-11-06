@@ -17,18 +17,19 @@ def clean_and_create_dir(directory):
 def main(config):
     cudnn.benchmark = True
 
-    # Checks if the log folder exists.
-    if not os.path.exists(config.log_dir):
-        os.makedirs(config.log_dir)
+    if config.mode == 'train':
+        # Checks if the log folder exists.
+        if not os.path.exists(config.log_dir):
+            os.makedirs(config.log_dir)
 
-    # Checks if the model folder exists and clean it.
-    clean_and_create_dir(config.model_save_dir)
+        # Checks if the model folder exists and clean it.
+        clean_and_create_dir(config.model_save_dir)
 
-    # Checks if the sample folder exists and clean it.
-    clean_and_create_dir(config.sample_dir)
+        # Checks if the sample folder exists and clean it.
+        clean_and_create_dir(config.sample_dir)
 
-    # Checks if the result folder exists and clean it.
-    clean_and_create_dir(config.result_dir)
+        # Checks if the result folder exists and clean it.
+        clean_and_create_dir(config.result_dir)
         
     imagenet_loader = None
     imagenet_class_loader = None
