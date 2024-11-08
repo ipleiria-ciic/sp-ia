@@ -11,3 +11,4 @@ Datasets
 **/UAP/
 **/*.mp4
 **/*.pth
+.vscode
