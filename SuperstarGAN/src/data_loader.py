@@ -6,7 +6,7 @@ from torchvision import transforms as T
 from PIL import Image
 
 class ImageNet(data.Dataset):
-    def __init__(self, image_dir, attr_path, selected_attrs, transform, mode):
+    def __init__(self, image_dir, attr_path, selected_attrs, transform=None, mode='train'):
         self.image_dir = image_dir
         self.attr_path = attr_path
         self.selected_attrs = selected_attrs
@@ -22,7 +22,7 @@ class ImageNet(data.Dataset):
             self.num_images = len(self.train_dataset)
         else:
             self.num_images = len(self.test_dataset)
-    
+
     def preprocess(self):
         lines = [line.rstrip() for line in open(self.attr_path, 'r')]
         all_attr_names = lines[1].split()
@@ -55,13 +55,13 @@ class ImageNet(data.Dataset):
         dataset = self.train_dataset if self.mode == 'train' else self.test_dataset
         filename, label = dataset[index]
         image = Image.open(os.path.join(self.image_dir, filename))
-        return self.transform(image), torch.FloatTensor(label)
+        return self.transform(image), torch.FloatTensor(label), filename
     
     def __len__(self):     
         """Return the number of images."""
         return self.num_images
 
-def get_loader(image_dir, attr_path, selected_attrs, crop_size=178, image_size=128, batch_size=16, dataset='CelebA', mode='train', num_workers=0):    
+def get_loader(image_dir, attr_path, selected_attrs, crop_size=178, image_size=128, batch_size=16, dataset='ImageNet', mode='train', num_workers=0):    
     transform = []
     if mode == 'train':
         transform.append(T.RandomHorizontalFlip())
@@ -71,7 +71,6 @@ def get_loader(image_dir, attr_path, selected_attrs, crop_size=178, image_size=1
     transform.append(T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)))
     transform = T.Compose(transform)
 
-    # TODO: Change the directory of the test mode.
     if mode == 'train':
         dataset = ImageNet(image_dir, attr_path, selected_attrs, transform, mode)
     elif mode == 'test':
@@ -86,15 +85,15 @@ def get_loader_class(image_dir, attr_path, selected_attrs, crop_size=178, image_
     transform = []
     if mode == 'train':
         transform.append(T.RandomHorizontalFlip(p=0.5))
+    
     transform.append(T.CenterCrop(crop_size))
     transform.append(T.Resize(image_size))
     transform.append(T.RandomRotation(degrees = (-20,20)))
     transform.append(T.ToTensor())
     transform.append(T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)))
     transform = T.Compose(transform)
-
+    
     dataset = ImageNet(image_dir, attr_path, selected_attrs, transform, mode)
          
     data_loader = data.DataLoader(dataset=dataset, batch_size=batch_size, shuffle=(mode=='train'), num_workers=num_workers)
     return data_loader
-    

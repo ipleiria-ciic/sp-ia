@@ -30,6 +30,10 @@ def main(config):
 
         # Checks if the result folder exists and clean it.
         clean_and_create_dir(config.result_dir)
+
+    if config.mode == 'test':
+        # Checks if the result folder exists and clean it.
+        clean_and_create_dir(config.result_dir)
         
     imagenet_loader = None
     imagenet_class_loader = None
