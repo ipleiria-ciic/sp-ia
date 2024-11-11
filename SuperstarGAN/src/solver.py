@@ -9,6 +9,7 @@ from torchvision.utils import save_image
 from model import Generator
 from model import Discriminator
 from model import Classifier
+from PIL import Image
 
 class Solver(object):
     """Solver for training and testing StarGAN."""
@@ -367,9 +368,6 @@ class Solver(object):
                 # Prepare input images and target domain labels.
                 x_real = x_real.to(self.device)
 
-                print(x_real)
-                break
-
                 # Create class target lists.
                 c_trg_list = self.create_labels(c_org, self.c_dim, self.selected_attrs)
 
@@ -378,18 +376,14 @@ class Solver(object):
                 
                 for c_trg in c_trg_list:
                     x_fake_list.append(self.G(x_real, c_trg))
+                    break # Only the first attribute
 
-                # x_fake_list[0] -> images with noise (adversarial images)
-                print(x_fake_list[0])
-                print(filename)
+                for i, x_fake in enumerate(x_fake_list[0]):
+                    result_path = os.path.join(self.result_dir, f"{filename[i]}")
+                    image = x_fake.cpu()
+                    save_image(self.denorm(image), result_path)
+                    print(f'Image {filename[i]} saved.')
 
-                break
-
-                # Save the translated images.
-                x_concat = torch.cat(x_fake_list[0], dim=3)
-                result_path = os.path.join(self.result_dir, '{}-images.jpg'.format(i+1))
-                save_image(self.denorm(x_concat.data.cpu()), result_path, nrow=1, padding=0)
-                print('Saved real and fake images into {}...'.format(result_path))
 
 class HingeLoss(torch.nn.Module):
     def __init__(self):
