@@ -2,7 +2,7 @@ import os
 import shutil
 
 base_path = '../../../Datasets/ImageNet5'
-new_folder = '../../../Datasets/ImageNet5/Test-Images'
+new_folder = '../../../Datasets/ImageNet5/Images-Test'
 
 def clean_and_create_dir(directory):
     if os.path.exists(directory):
@@ -18,7 +18,7 @@ images_break = 20
 for folder_name in os.listdir(base_path):
     folder_path = os.path.join(base_path, folder_name)
     
-    if os.path.isdir(folder_path) and folder_name not in ["Images", "Test-Images", "9999"]:
+    if os.path.isdir(folder_path) and folder_name not in ["Images", "Test-Images", "Images-Test", "9999"]:
         for i, image_name in enumerate(os.listdir(folder_path)):
             if i >= images_break:
                 break
