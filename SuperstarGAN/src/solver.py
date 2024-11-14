@@ -173,7 +173,7 @@ class Solver(object):
 
         # Fetch fixed inputs for debugging.
         data_iter = iter(data_loader)
-        x_fixed, c_org = next(data_iter)
+        x_fixed, c_org, filename = next(data_iter)
         x_fixed = x_fixed.to(self.device)
         c_fixed_list = self.create_labels(c_org, self.c_dim, self.selected_attrs)
         data_iter_class = iter(data_loader_class)
@@ -203,13 +203,13 @@ class Solver(object):
                 x_real, label_org = next(data_iter)
             except:
                 data_iter = iter(data_loader)
-                x_real, label_org = next(data_iter)
+                x_real, label_org, filename = next(data_iter)
 
             try:
                 x_real_class, label_org_class = next(data_iter_class)
             except:
                 data_iter_class = iter(data_loader_class)
-                x_real_class, label_org_class = next(data_iter_class)
+                x_real_class, label_org_class, filename = next(data_iter_class)
 
             # Generate target domain labels randomly.
             rand_idx = torch.randperm(label_org.size(0))
