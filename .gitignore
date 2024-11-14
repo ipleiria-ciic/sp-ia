@@ -12,3 +12,5 @@ Datasets
 **/*.mp4
 **/*.pth
 .vscode
+**/__pycache__/
+**/*.pyc
