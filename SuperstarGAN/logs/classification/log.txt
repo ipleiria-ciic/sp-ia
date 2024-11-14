@@ -1,0 +1,7 @@
+Classification created on: 2024-11-13 15:42:05.
+Total images classified: 1999.
+Original accuracy classification: 80.14%
+Adversarial accuracy classification (in a total of 1602 images): 18.91%
+Total adversarial images that fooled the classifier: 303.
+Classification completed in '0:01:04'
+---
