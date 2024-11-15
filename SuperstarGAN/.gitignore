@@ -1,5 +1,5 @@
-logs
 models
 results
 results-transformed
 samples
+**/__pycache__/

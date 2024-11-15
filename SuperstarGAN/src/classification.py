@@ -14,10 +14,7 @@ img_adversarial_path = "../results-transformed/imagenet"
 img_to_class = "../../../Datasets/ImageNet5/image_to_class.txt"
 log_path = "../logs/classification"
 
-def classifier(model, device, img_given):
-    was_training = model.training
-    model.eval()
-    
+def classifier(model, device, img_given):    
     data_transforms = utils.transforms()
     
     img = data_transforms['val'](img_given)
@@ -27,9 +24,9 @@ def classifier(model, device, img_given):
     with torch.no_grad():
         outputs = model(img)
         _, preds = torch.max(outputs, 1)
-
-        model.train(mode=was_training)
-
+    
+    torch.cuda.empty_cache()
+    
     return preds[0]+1
 
 # Start time.
@@ -41,6 +38,7 @@ device = utils.use_device()
 # Get the classification model.
 model_path = '../models/vgg16/modelvgg16-imagenet4.pt'
 model = torch.jit.load(model_path)
+model.eval()
 
 # Fetch all the images (original and adversarial) and the mapping classes.
 original_images, adversarial_images, mapping_classes = utils.fetch_images(img_original_path, img_adversarial_path, img_to_class)
@@ -87,12 +85,12 @@ elapsed = time.time() - start_time
 os.makedirs(log_path, exist_ok=True)
 txt_class_path = os.path.join(log_path, "log.txt")
 with open(txt_class_path, mode="a") as file:
-    file.write(f"Classification created on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.\n")
+    file.write(f"\nClassification created on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.\n")
     file.write(f"Total images classified: {total_images}.\n")
     file.write(f"Original accuracy classification: {((acc_original*100)/total_images):.2f}%\n")
     file.write(f"Adversarial accuracy classification (in a total of {acc_original} images): {((acc_adversarial*100)/acc_original):.2f}%\n")
     file.write(f"Total adversarial images that fooled the classifier: {acc_adversarial}.\n")
     file.write(f"Classification completed in '{str(timedelta(seconds=int(elapsed)))}'\n")
-    file.write(f"---\n")
+    file.write(f"---")
 
 print(f"[ INFO ] Classification completed in '{str(timedelta(seconds=int(elapsed)))}'.")
