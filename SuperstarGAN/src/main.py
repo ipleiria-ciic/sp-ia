@@ -61,9 +61,9 @@ if __name__ == '__main__':
     parser.add_argument('--c_dim', type=int, default=40)
     parser.add_argument('--crop_size', type=int, default=178)
     parser.add_argument('--image_size', type=int, default=128)
-    parser.add_argument('--g_conv_dim', type=int, default=8)
-    parser.add_argument('--d_conv_dim', type=int, default=8)
-    parser.add_argument('--c_conv_dim', type=int, default=8) 
+    parser.add_argument('--g_conv_dim', type=int, default=16)
+    parser.add_argument('--d_conv_dim', type=int, default=16)
+    parser.add_argument('--c_conv_dim', type=int, default=16) 
     parser.add_argument('--g_repeat_num', type=int, default=6)
     parser.add_argument('--d_repeat_num', type=int, default=6)
     parser.add_argument('--c_repeat_num', type=int, default=6)     
@@ -73,8 +73,8 @@ if __name__ == '__main__':
                                             
     # Training configuration.
     parser.add_argument('--dataset', type=str, default='ImageNet')
-    parser.add_argument('--batch_size', type=int, default=16)
-    parser.add_argument('--num_iters', type=int, default=1000000)
+    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--num_iters', type=int, default=500000)
     parser.add_argument('--num_iters_decay', type=int, default=100000)
     parser.add_argument('--g_lr', type=float, default=0.0001)
     parser.add_argument('--d_lr', type=float, default=0.0001)
