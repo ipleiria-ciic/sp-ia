@@ -1,0 +1,9 @@
+numpy
+lpips
+pandas
+scipy
+torch
+torchvision
+torchaudio
+python-dotenv
+alive-progress
