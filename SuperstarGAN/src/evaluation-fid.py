@@ -1,6 +1,6 @@
 """
-    Script to evaluate the results of the SuperstarGAN
-    with both FID and LPIPS metrics.
+    Script to evaluate the results of the
+    SuperstarGAN with the FID metric.
 """
 
 import os
