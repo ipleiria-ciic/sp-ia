@@ -232,7 +232,7 @@ def adversarial_classifier(img_original_path, img_adversarial_path, img_to_class
     len_original = acc_original
     len_adversarial = acc_adversarial
     acc_original = (acc_original*100)/total_images
-    acc_adversarial = (acc_adversarial*100)/acc_original
+    acc_adversarial = (acc_adversarial*100)/len_original
 
     return len_original, len_adversarial, acc_original, acc_adversarial
 
