@@ -22,13 +22,20 @@ start_time = time.time()
 utils.img_transform(SUPERSTARGAN_IMAGENET_RESULT, SUPERSTARGAN_IMAGENET_TRANSFORMED, 12)
 
 # Classifies the images that were previously transformed.
-utils.adversarial_classifier(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED, IMAGENET_MAPPING_CLASS, CLASSIFICATION_LOGS, IMAGENET_VGG_MODEL)
+len_original, len_adversarial, acc_original, acc_adversarial = utils.adversarial_classifier(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED, IMAGENET_MAPPING_CLASS, CLASSIFICATION_LOGS, IMAGENET_VGG_MODEL)
 
 # Evaluates the FID score.
-utils.fid(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED)
+fid_score = utils.fid(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED)
 
 # Calculates de LPIPS similarity.
-utils.calculate_lpips(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED)
+lpips_score, aggregation = utils.calculate_lpips(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED)
+
+# Printable results.
+print(f"[ \033[92mRESULTS\033[0m ] Original accuracy classification: {acc_original:.2f}%")
+print(f"[ \033[92mRESULTS\033[0m ] Adversarial accuracy classification (in a total of {len_original} images): {acc_adversarial:.2f}%")
+print(f"[ \033[92mRESULTS\033[0m ] A total of {len_adversarial} adversarial images successfully fooled the classifier.")
+print(f"[ \033[92mRESULTS\033[0m ] FID score: {fid_score:.02f}.")
+print(f"[ \033[92mRESULTS\033[0m ] LPIPS similarity: {lpips_score:.02f}. Aggregation used: '{aggregation}'.")
 
 # End time.
 elapsed = time.time() - start_time
