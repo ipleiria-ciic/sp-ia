@@ -27,10 +27,11 @@ utils.adversarial_classifier(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED, I
 # Evaluates the FID score.
 utils.fid(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED)
 
-# TODO: LPIPS score calculation.
+# Calculates de LPIPS similarity.
+utils.calculate_lpips(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED)
 
 # End time.
 elapsed = time.time() - start_time
 
 # Final message.
-print(f"[ INFO ] Task completed in {str(datetime.timedelta(seconds=int(elapsed)))}.")
+print(f"[ INFO ] All the tasks completed in {str(datetime.timedelta(seconds=int(elapsed)))}.")
