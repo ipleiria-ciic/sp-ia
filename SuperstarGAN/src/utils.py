@@ -210,15 +210,10 @@ def adversarial_classifier(img_original_path, img_adversarial_path, img_to_class
                 r_adv = classifier(model, device, adversarial_images[i])
                 if r_adv != r:
                     acc_adversarial += 1
-            else:
+           # else:
                 # Debugger. Can be deleted later.
                 # print(f"[ INFO ] Classification of the image '{i:04}'. [ORI: {int(mapping_classes[i])}; ADV: {r+1}] [ NOK ]")
-                continue
-
-    # print(f"[ RESULTS ] Total images classified: {total_images}.")
-    print(f"[ \033[92mRESULTS\033[0m ] Original accuracy classification: {((acc_original*100)/total_images):.2f}%")
-    print(f"[ \033[92mRESULTS\033[0m ] Adversarial accuracy classification (in a total of {acc_original} images): {((acc_adversarial*100)/acc_original):.2f}%")
-    print(f"[ \033[92mRESULTS\033[0m ] A total of {acc_adversarial} adversarial images successfully fooled the classifier.")
+                # continue
 
     # Create log file with the following information: datetime, total_images, acc_original and acc_adversarial.
     os.makedirs(log_path, exist_ok=True)
@@ -233,6 +228,13 @@ def adversarial_classifier(img_original_path, img_adversarial_path, img_to_class
 
     # print(f"[ INFO ] Classification were written in '{txt_class_path}'.")
     torch.cuda.empty_cache()
+
+    len_original = acc_original
+    len_adversarial = acc_adversarial
+    acc_original = (acc_original*100)/total_images
+    acc_adversarial = (acc_adversarial*100)/acc_original
+
+    return len_original, len_adversarial, acc_original, acc_adversarial
 
 # Function to compute activations for an entire DataLoader.
 def get_activations(data_loader, model, device, title):
@@ -320,7 +322,7 @@ def fid(real_dataset_path, generated_dataset_path):
     # Compute FID.
     fid_score = calculate_fid(mu_real, sigma_real, mu_gen, sigma_gen)
 
-    print(f"[ \033[92mRESULTS\033[0m ] FID score: {fid_score:.02f}.")
+    return fid_score
 
 def calculate_lpips(real_dataset_path, generated_dataset_path, network='vgg', aggregation='mean'):
     """
@@ -382,5 +384,5 @@ def calculate_lpips(real_dataset_path, generated_dataset_path, network='vgg', ag
     else:
         raise ValueError("[ ERROR ] Invalid aggregation method. Choose from 'mean', 'harmonic_mean', or 'median'.")
 
-    print(f"[ \033[92mRESULTS\033[0m ] Final LPIPS similarity: {final_score:.02f}. Aggregation used: '{aggregation}'.")
-    return final_score
+    # print(f"[ \033[92mRESULTS\033[0m ] Final LPIPS similarity: {final_score:.02f}. Aggregation used: '{aggregation}'.")
+    return final_score, aggregation
