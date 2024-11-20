@@ -1,14 +1,17 @@
 import os
-import time
+import lpips
+import warnings
 import numpy as np
 import alive_progress
 
 from PIL import Image
+from datetime import datetime
 from scipy.linalg import sqrtm
-from datetime import datetime, timedelta
+from statistics import mean, harmonic_mean, median
 
 import torch
 import torch.nn as nn
+
 from torchvision import models, transforms
 from torchvision.transforms import v2 as T
 from torch.utils.data import Dataset, DataLoader
@@ -134,7 +137,7 @@ def img_transform(input_folder, output_folder, threshold):
     
     total_files = sum(1 for filename in os.listdir(input_folder) if filename.endswith(".jpg"))
 
-    with alive_progress.alive_bar(total_files, title="[ INFO ] Images processing", bar='classic', spinner=None) as bar:
+    with alive_progress.alive_bar(total_files, title="[ INFO ] Image processing", bar='classic', spinner=None) as bar:
         for filename in os.listdir(input_folder):
             if filename.endswith(".jpg"):
                 input_path = os.path.join(input_folder, filename)
@@ -281,6 +284,14 @@ def calculate_fid(mu1, sigma1, mu2, sigma2):
     return fid
 
 def fid(real_dataset_path, generated_dataset_path):
+    """
+    Preparation of both real and generated datasets for the FID calculation.
+
+    Parameters:
+    - real_dataset_path: Real dataset path.
+    - generated_dataset_path: Generated (adversarial) dataset path.
+    """
+
     model = InceptionV3FeatureExtractor().eval()
     device = use_device()
 
@@ -310,3 +321,66 @@ def fid(real_dataset_path, generated_dataset_path):
     fid_score = calculate_fid(mu_real, sigma_real, mu_gen, sigma_gen)
 
     print(f"[ \033[92mRESULTS\033[0m ] FID score: {fid_score:.02f}.")
+
+def calculate_lpips(real_dataset_path, generated_dataset_path, network='vgg', aggregation='mean'):
+    """
+    Calculate LPIPS similarity for the entire dataset.
+
+    Parameters:
+    - real_dataset_path: Real dataset path.
+    - generated_dataset_path: Generated (adversarial) dataset path.
+    - network: Network to use in the LPIPS calculation. Default: VGG.
+    - aggregation: Aggregation method for final similarity. Options: 'mean', 'harmonic_mean', 'median'. Default: 'mean'.
+    """
+
+    # Disable the warning from torch (built-in in LPIPS).
+    warnings.filterwarnings("ignore", module="torch")
+    warnings.filterwarnings("ignore", module="lpips")
+
+    loss_fn = lpips.LPIPS(net=network, verbose=False)
+
+    transform = transforms.Compose([
+        transforms.Resize((256, 256)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ])
+
+    real_images = sorted(os.listdir(real_dataset_path))
+    generated_images = sorted(os.listdir(generated_dataset_path))
+
+    # Align dataset sizes: the size must the same.
+    if len(real_images) > len(generated_images):
+        real_images = real_images[:len(generated_images)]
+    else:
+        generated_images = generated_images[:len(real_images)]
+
+    # Ensure both datasets have the same number of images.
+    assert len(real_images) == len(generated_images), "Datasets must have the same number of images."
+
+    # Calculate LPIPS for each image pair.
+    lpips_scores = []
+    with alive_progress.alive_bar(len(real_images), title=f"[ INFO ] LPIPS similarity calculation", bar='classic', spinner=None) as bar:
+        for real_img_name, gen_img_name in zip(real_images, generated_images):
+            real_img_path = os.path.join(real_dataset_path, real_img_name)
+            gen_img_path = os.path.join(generated_dataset_path, gen_img_name)
+
+            real_img = transform(Image.open(real_img_path).convert("RGB")).unsqueeze(0)
+            gen_img = transform(Image.open(gen_img_path).convert("RGB")).unsqueeze(0)
+
+            # Calculate LPIPS similarity.
+            similarity = loss_fn(real_img, gen_img).item()
+            lpips_scores.append(similarity)
+
+            bar()
+
+    if aggregation == 'mean':
+        final_score = mean(lpips_scores)
+    elif aggregation == 'harmonic_mean':
+        final_score = harmonic_mean(lpips_scores)
+    elif aggregation == 'median':
+        final_score = median(lpips_scores)
+    else:
+        raise ValueError("[ ERROR ] Invalid aggregation method. Choose from 'mean', 'harmonic_mean', or 'median'.")
+
+    print(f"[ \033[92mRESULTS\033[0m ] Final LPIPS similarity: {final_score:.02f}. Aggregation used: '{aggregation}'.")
+    return final_score
