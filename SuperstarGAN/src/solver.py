@@ -74,22 +74,33 @@ class Solver(object):
         #     self.build_tensorboard()
 
     def build_model(self):
-        """Create a generator and a discriminator."""
+        """Create a generator and discriminators."""
 
+        # Create the generator
         self.G = Generator(self.g_conv_dim, self.c_dim, self.g_repeat_num)
-        self.D = Discriminator(self.image_size, self.d_conv_dim, self.c_dim, self.d_repeat_num)
+        
+        # Add a list of discriminators
+        self.discriminators = []
+        for i in range(2):
+            discriminator = Discriminator(self.image_size, self.d_conv_dim, self.c_dim, self.d_repeat_num)
+            self.discriminators.append(discriminator)
+        
+        # Create the classifier
         self.C = Classifier(self.image_size, self.c_conv_dim, self.c_dim, self.c_repeat_num)
 
+        # Optimizers for each network
         self.g_optimizer = torch.optim.Adam(self.G.parameters(), self.g_lr, [self.beta1, self.beta2])
-        self.d_optimizer = torch.optim.Adam(self.D.parameters(), self.d_lr, [self.beta1, self.beta2])
+        self.d_optimizers = []  # Store optimizers for all discriminators
+        for discriminator in self.discriminators:
+            optimizer = torch.optim.Adam(discriminator.parameters(), self.d_lr, [self.beta1, self.beta2])
+            self.d_optimizers.append(optimizer)
+        
         self.c_optimizer = torch.optim.Adam(self.C.parameters(), self.c_lr, [self.c_beta1, self.beta2])
 
-        # self.print_network(self.G, 'G')
-        # self.print_network(self.D, 'D')
-        # self.print_network(self.C, 'C')
-
+        # Move all models to the specified device
         self.G.to(self.device)
-        self.D.to(self.device)
+        for discriminator in self.discriminators:
+            discriminator.to(self.device)
         self.C.to(self.device)
 
     def print_network(self, model, name):
@@ -253,10 +264,9 @@ class Solver(object):
             # =================================================================================== #
             #                             2-1. Train the discriminator                            #
             # =================================================================================== #
-
+            
             # Compute loss with real images.
             out_src = self.D(x_real)
-            # d_loss_real = - torch.mean(out_src)
             d_loss_real = torch.mean(F.relu(1. - torch.mul(out_src, 1.0)))
 
             # Compute loss with fake images.
