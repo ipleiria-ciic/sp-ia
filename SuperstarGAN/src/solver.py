@@ -73,6 +73,9 @@ class Solver(object):
         # if self.use_tensorboard:
         #     self.build_tensorboard()
 
+
+    # ** Edited by @joseareia on 2024/12/13 **
+    # Changelog: Added the list of discriminators and refactored the optimizers call for each discriminator.
     def build_model(self):
         """Create a generator and discriminators."""
 
@@ -264,32 +267,40 @@ class Solver(object):
             # =================================================================================== #
             #                             2-1. Train the discriminator                            #
             # =================================================================================== #
-            
-            # Compute loss with real images.
-            out_src = self.D(x_real)
-            d_loss_real = torch.mean(F.relu(1. - torch.mul(out_src, 1.0)))
 
-            # Compute loss with fake images.
-            x_fake = self.G(x_real, c_trg)
-            out_src = self.D(x_fake.detach())
-            d_loss_fake = torch.mean(F.relu(1. - torch.mul(out_src, -1.0)))
+            losses_real, losses_fake, losses_gp = [], [], []
 
-            # Compute loss for gradient penalty.
-            alpha = torch.rand(x_real.size(0), 1, 1, 1).to(self.device)
-            x_hat = (alpha * x_real.data + (1 - alpha) * x_fake.data).requires_grad_(True)
-            out_src = self.D(x_hat)
-            d_loss_gp = self.gradient_penalty(out_src, x_hat)
+            for i, discriminator in enumerate(self.discriminators):
+                # Compute loss with real images.
+                out_src = discriminator(x_real)
+                d_loss_real = torch.mean(F.relu(1.0 - out_src))  # No need for torch.mul
+                losses_real.append(d_loss_real)
 
-            # Backward and optimize.
-            d_loss = d_loss_real + d_loss_fake + self.lambda_gp * d_loss_gp
-            self.reset_grad()
-            d_loss.backward()
-            self.d_optimizer.step()
+                # Compute loss with fake images.
+                x_fake = self.G(x_real, c_trg)
+                out_src = discriminator(x_fake.detach())
+                d_loss_fake = torch.mean(F.relu(1.0 + out_src))  # No need for torch.mul
+                losses_fake.append(d_loss_fake)
 
-            # Logging.
-            loss['D/loss_real'] = d_loss_real.item()
-            loss['D/loss_fake'] = d_loss_fake.item()
-            loss['D/loss_gp'] = d_loss_gp.item()
+                # Compute loss for gradient penalty.
+                alpha = torch.rand(x_real.size(0), 1, 1, 1).to(self.device)
+                x_hat = (alpha * x_real.data + (1 - alpha) * x_fake.data).requires_grad_(True)
+                out_src = discriminator(x_hat)
+                d_loss_gp = self.gradient_penalty(out_src, x_hat)
+                losses_gp.append(d_loss_gp)
+
+                # Compute total loss for the discriminator.
+                d_loss = d_loss_real + d_loss_fake + self.lambda_gp * d_loss_gp
+
+                # Backward and optimize each discriminator.
+                self.reset_grad()
+                d_loss.backward()
+                self.d_optimizers[i].step()
+
+                # Logging for each discriminator.
+                loss[f'D_{i}/loss_real'] = d_loss_real.item()
+                loss[f'D_{i}/loss_fake'] = d_loss_fake.item()
+                loss[f'D_{i}/loss_gp'] = d_loss_gp.item()
 
             # =================================================================================== #
             #                               2-2. Train the generator                              #
