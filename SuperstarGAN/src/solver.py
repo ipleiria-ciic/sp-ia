@@ -385,15 +385,21 @@ class Solver(object):
                     save_image(self.denorm(x_concat.data.cpu()), sample_path, nrow=1, padding=0)
                     print("[INFO] Saving images into '{}'.".format(sample_path))
 
-            # Save model checkpoints.
+            # ** Edited by @joseareia on 2024/12/16 **
+            # Changelog: Update the method of saving models to include all the discriminator models.
             if (i+1) % self.model_save_step == 0:
                 G_path = os.path.join(self.model_save_dir, '{}-G.ckpt'.format(i+1))
-                D_path = os.path.join(self.model_save_dir, '{}-D.ckpt'.format(i+1))
                 C_path = os.path.join(self.model_save_dir, '{}-C.ckpt'.format(i+1))
 
+                # Save generator and classifier checkpoints.
                 torch.save(self.G.state_dict(), G_path)
-                torch.save(self.D.state_dict(), D_path)
                 torch.save(self.C.state_dict(), C_path)
+
+                # Save each discriminator checkpoint.
+                for d_idx, discriminator in enumerate(self.discriminators):
+                    D_path = os.path.join(self.model_save_dir, '{}-D{}.ckpt'.format(i+1, d_idx))
+                    torch.save(discriminator.state_dict(), D_path)
+
                 print("[INFO] Saving checkpoints into '{}'".format(self.model_save_dir))
 
             # Decay learning rates.
