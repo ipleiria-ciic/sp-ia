@@ -127,24 +127,29 @@ class Solver(object):
         self.D.load_state_dict(torch.load(D_path, map_location=lambda storage, loc: storage, weights_only=False))
         self.C.load_state_dict(torch.load(C_path, map_location=lambda storage, loc: storage, weights_only=False))
 
-    # def build_tensorboard(self):
-    #     """Build a tensorboard logger."""
-    #     from logger import Logger
-    #     self.logger = Logger(self.log_dir)
-
+    # ** Edited by @joseareia on 2024/12/16 **
+    # Changelog: Iterate for the list of optimizers in the discriminator.
     def update_lr(self, g_lr, d_lr, c_lr):
         """Decay learning rates of the generator and discriminator."""
         for param_group in self.g_optimizer.param_groups:
             param_group['lr'] = g_lr
-        for param_group in self.d_optimizer.param_groups:
-            param_group['lr'] = d_lr
+
+        for d_optimizer in self.d_optimizers:
+            for param_group in d_optimizer.param_groups:
+                param_group['lr'] = d_lr
+
         for param_group in self.c_optimizer.param_groups:
             param_group['lr'] = c_lr
 
+    # ** Edited by @joseareia on 2024/12/16 **
+    # Changelog: Iterate for the list of optimizers in the discriminator.
     def reset_grad(self):
         """Reset the gradient buffers."""
         self.g_optimizer.zero_grad()
-        self.d_optimizer.zero_grad()
+
+        for d_optimizer in self.d_optimizers:
+            d_optimizer.zero_grad()
+
         self.c_optimizer.zero_grad()
 
     def denorm(self, x):
@@ -196,6 +201,15 @@ class Solver(object):
         g_lr = self.g_lr
         d_lr = self.d_lr
         c_lr = self.c_lr
+
+        # ** Edited by @joseareia on 2024/12/16 **
+        # Changelog: Print the network used for train, including all the discriminators.
+        self.print_network(self.G, 'G')
+
+        for discriminator in self.discriminators:
+            self.print_network(discriminator, 'D')
+
+        self.print_network(self.C, 'C') 
 
         # Start training from scratch or resume training.
         start_iters = 0
@@ -268,9 +282,10 @@ class Solver(object):
             #                             2-1. Train the discriminator                            #
             # =================================================================================== #
 
+            # ** Edited by @joseareia on 2024/12/16 **
+            # Changelog: Train a list of various discriminators.
             losses_real, losses_fake, losses_gp = [], [], []
-
-            for i, discriminator in enumerate(self.discriminators):
+            for d_idx, discriminator in enumerate(self.discriminators):
                 # Compute loss with real images.
                 out_src = discriminator(x_real)
                 d_loss_real = torch.mean(F.relu(1.0 - out_src))  # No need for torch.mul
@@ -295,37 +310,54 @@ class Solver(object):
                 # Backward and optimize each discriminator.
                 self.reset_grad()
                 d_loss.backward()
-                self.d_optimizers[i].step()
+                self.d_optimizers[d_idx].step()
 
                 # Logging for each discriminator.
-                loss[f'D_{i}/loss_real'] = d_loss_real.item()
-                loss[f'D_{i}/loss_fake'] = d_loss_fake.item()
-                loss[f'D_{i}/loss_gp'] = d_loss_gp.item()
+                loss[f'D_{d_idx}/loss_real'] = d_loss_real.item()
+                loss[f'D_{d_idx}/loss_fake'] = d_loss_fake.item()
+                loss[f'D_{d_idx}/loss_gp'] = d_loss_gp.item()
 
             # =================================================================================== #
             #                               2-2. Train the generator                              #
             # =================================================================================== #
 
+            # ** Edited by @joseareia on 2024/12/16 **
+            # Changelog: Update the train of the generator to include all the losses from the all discriminators.
             if (i+1) % self.n_critic == 0:
-                # Original-to-target domain.
+                # Initialize loss accumulators for the generator.
+                g_loss_fake_total = 0.0
+
+                # Original-to-target domain for all discriminators.
                 x_fake = self.G(x_real, c_trg)
-                out_src = self.D(x_fake)
-                g_loss_fake = - torch.mean(out_src)
+
+                # Compute adversarial loss for the generator using all discriminators.
+                for d_idx, discriminator in enumerate(self.discriminators):
+                    out_src = discriminator(x_fake)
+                    g_loss_fake = -torch.mean(out_src)
+                    g_loss_fake_total += g_loss_fake
+
+                # Classification loss.
                 out_cls_f = self.C(x_fake)
                 c_loss_f = self.classification_loss(out_cls_f, c_trg)
 
-                # Target-to-original domain.
+                # Target-to-original domain reconstruction loss.
                 x_reconst = self.G(x_fake, c_org)
                 g_loss_rec = torch.mean(torch.abs(x_real - x_reconst))
 
+                # Combine all generator losses.
+                g_loss = (
+                    g_loss_fake_total / len(self.discriminators)
+                    + self.lambda_rec * g_loss_rec
+                    + self.lambda_cls * c_loss_f
+                )
+
                 # Backward and optimize.
-                g_loss = g_loss_fake + self.lambda_rec * g_loss_rec + self.lambda_cls * c_loss_f
                 self.reset_grad()
                 g_loss.backward()
                 self.g_optimizer.step()
 
                 # Logging.
-                loss['G/loss_fake'] = g_loss_fake.item()
+                loss['G/loss_fake'] = g_loss_fake_total.item() / len(self.discriminators)
                 loss['G/loss_rec'] = self.lambda_rec * g_loss_rec.item()
                 loss['G/loss_cls'] = self.lambda_cls * c_loss_f.item()
 
@@ -341,10 +373,6 @@ class Solver(object):
                 for tag, value in loss.items():
                     log += ", {}: {:.4f}".format(tag, value)
                 print(log)
-
-                # if self.use_tensorboard:
-                #     for tag, value in loss.items():
-                #         self.logger.scalar_summary(tag, value, i+1)
 
             # Translate fixed images for debugging.
             if (i+1) % self.sample_step == 0:
