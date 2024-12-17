@@ -48,6 +48,7 @@ class Solver(object):
         self.c_beta1 = config.c_beta1
         self.resume_iters = config.resume_iters
         self.selected_attrs = config.selected_attrs
+        self.delta = 1.05
 
         # Test configurations.
         self.test_iters = config.test_iters
@@ -304,23 +305,25 @@ class Solver(object):
                 d_loss_gp = self.gradient_penalty(out_src, x_hat)
                 losses_gp.append(d_loss_gp)
 
-                # Compute total loss for the discriminator.
+                # Compute total loss for the current discriminator.
                 d_loss = d_loss_real + d_loss_fake + self.lambda_gp * d_loss_gp
 
-                # Backward and optimize each discriminator.
+                # Backward and optimize.
                 self.reset_grad()
                 d_loss.backward()
                 self.d_optimizers[d_idx].step()
 
-            # ** Edited by @joseareia on 2024/12/17 **
-            # Changelog: Specify different weights for each discriminator loss.
-            first_discriminator_loss = losses_real[0] + losses_fake[0] + self.lambda_gp * losses_gp[0]
-            second_discriminator_loss = losses_real[1] + losses_fake[1] + self.lambda_gp * losses_gp[1]
-            d_loss_general = (0.7 * first_discriminator_loss + 0.3 * second_discriminator_loss)
+            # Weighted general loss for all discriminators.
+            # d_loss_general = (
+            #     0.7 * (losses_real[0] + losses_fake[0] + self.lambda_gp * losses_gp[0]) +
+            #     0.3 * (losses_real[1] + losses_fake[1] + self.lambda_gp * losses_gp[1])
+            # )
 
+            # Logging the general discriminator loss components.
             loss['D_general/loss_real'] = (0.7 * losses_real[0].item() + 0.3 * losses_real[1].item())
             loss['D_general/loss_fake'] = (0.7 * losses_fake[0].item() + 0.3 * losses_fake[1].item())
             loss['D_general/loss_gp'] = (0.7 * losses_gp[0].item() + 0.3 * losses_gp[1].item())
+
 
             # =================================================================================== #
             #                               2-2. Train the generator                              #
@@ -329,42 +332,43 @@ class Solver(object):
             # ** Edited by @joseareia on 2024/12/16 **
             # Changelog: Update the train of the generator to include all the losses from the all discriminators.
             if (i+1) % self.n_critic == 0:
-                # Initialize loss accumulators for the generator.
-                g_loss_fake_total = 0.0
-
-                # Original-to-target domain for all discriminators.
+                # Generate fake images.
                 x_fake = self.G(x_real, c_trg)
 
-                # Compute adversarial loss for the generator using all discriminators.
-                for d_idx, discriminator in enumerate(self.discriminators):
-                    out_src = discriminator(x_fake)
-                    g_loss_fake = -torch.mean(out_src)
-                    g_loss_fake_total += g_loss_fake
+                # Compute adversarial losses weighted by discriminator contributions.
+                weighted_adversarial_losses = [
+                    weight * torch.mean(discriminator(x_fake))
+                    for weight, discriminator in zip([0.7, 0.3], self.discriminators)
+                ]
+
+                # Calculate nadir point with slack parameter delta.
+                nadir_point = self.delta * max(weighted_adversarial_losses).detach()
+
+                # Compute hypervolume loss.
+                hypervolume = -torch.sum(torch.log(nadir_point - loss) for loss in weighted_adversarial_losses)
 
                 # Classification loss.
                 out_cls_f = self.C(x_fake)
                 c_loss_f = self.classification_loss(out_cls_f, c_trg)
 
-                # Target-to-original domain reconstruction loss.
+                # Reconstruction loss (target-to-original domain).
                 x_reconst = self.G(x_fake, c_org)
                 g_loss_rec = torch.mean(torch.abs(x_real - x_reconst))
 
                 # Combine all generator losses.
-                g_loss = (
-                    g_loss_fake_total / len(self.discriminators)
-                    + self.lambda_rec * g_loss_rec
-                    + self.lambda_cls * c_loss_f
-                )
+                g_loss = hypervolume + self.lambda_rec * g_loss_rec + self.lambda_cls * c_loss_f + nadir_point
 
                 # Backward and optimize.
                 self.reset_grad()
                 g_loss.backward()
                 self.g_optimizer.step()
 
-                # Logging.
-                loss['G/loss_fake'] = g_loss_fake_total.item() / len(self.discriminators)
+                # Logging for generator losses.
+                loss['G/loss_hypervolume'] = hypervolume.item()
                 loss['G/loss_rec'] = self.lambda_rec * g_loss_rec.item()
                 loss['G/loss_cls'] = self.lambda_cls * c_loss_f.item()
+                loss['G/nadir_point'] = nadir_point.item()
+
 
             # =================================================================================== #
             #                                 3. Miscellaneous                                    #
