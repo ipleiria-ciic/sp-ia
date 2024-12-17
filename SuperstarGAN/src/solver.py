@@ -288,13 +288,13 @@ class Solver(object):
             for d_idx, discriminator in enumerate(self.discriminators):
                 # Compute loss with real images.
                 out_src = discriminator(x_real)
-                d_loss_real = torch.mean(F.relu(1.0 - out_src))  # No need for torch.mul
+                d_loss_real = torch.mean(F.relu(1.0 - out_src))
                 losses_real.append(d_loss_real)
 
                 # Compute loss with fake images.
                 x_fake = self.G(x_real, c_trg)
                 out_src = discriminator(x_fake.detach())
-                d_loss_fake = torch.mean(F.relu(1.0 + out_src))  # No need for torch.mul
+                d_loss_fake = torch.mean(F.relu(1.0 + out_src))
                 losses_fake.append(d_loss_fake)
 
                 # Compute loss for gradient penalty.
@@ -312,10 +312,15 @@ class Solver(object):
                 d_loss.backward()
                 self.d_optimizers[d_idx].step()
 
-                # Logging for each discriminator.
-                loss[f'D_{d_idx}/loss_real'] = d_loss_real.item()
-                loss[f'D_{d_idx}/loss_fake'] = d_loss_fake.item()
-                loss[f'D_{d_idx}/loss_gp'] = d_loss_gp.item()
+            # ** Edited by @joseareia on 2024/12/17 **
+            # Changelog: Specify different weights for each discriminator loss.
+            first_discriminator_loss = losses_real[0] + losses_fake[0] + self.lambda_gp * losses_gp[0]
+            second_discriminator_loss = losses_real[1] + losses_fake[1] + self.lambda_gp * losses_gp[1]
+            d_loss_general = (0.7 * first_discriminator_loss + 0.3 * second_discriminator_loss)
+
+            loss['D_general/loss_real'] = (0.7 * losses_real[0].item() + 0.3 * losses_real[1].item())
+            loss['D_general/loss_fake'] = (0.7 * losses_fake[0].item() + 0.3 * losses_fake[1].item())
+            loss['D_general/loss_gp'] = (0.7 * losses_gp[0].item() + 0.3 * losses_gp[1].item())
 
             # =================================================================================== #
             #                               2-2. Train the generator                              #
