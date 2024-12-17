@@ -345,7 +345,7 @@ class Solver(object):
                 nadir_point = self.delta * max(weighted_adversarial_losses).detach()
 
                 # Compute hypervolume loss.
-                hypervolume = -torch.sum(torch.log(nadir_point - loss) for loss in weighted_adversarial_losses)
+                hypervolume = -torch.sum(torch.stack([torch.log(nadir_point - loss) for loss in weighted_adversarial_losses]))
 
                 # Classification loss.
                 out_cls_f = self.C(x_fake)
