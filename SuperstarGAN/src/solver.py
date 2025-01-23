@@ -3,7 +3,9 @@ import sys
 import time
 import datetime
 import numpy as np
-import tensorflow as tf
+
+# Uncomment to use tensorboard
+# import tensorflow as tf
 
 import torch
 import torch.nn.functional as F
