@@ -1,6 +1,8 @@
 import os
 import shutil
 import argparse
+from datetime import datetime
+
 import torch
 from torch.backends import cudnn
 from solver import Solver
@@ -71,6 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda_rec', type=float, default=1.3)
     parser.add_argument('--lambda_gp', type=float, default=1)
     parser.add_argument('--lambda_perturbation', type=float, default=0.1)
+    parser.add_argument('--nadir_slack', type=float, default=1.05)          # Can range between 1.1 and 1.05.
                                             
     # Training configuration.
     parser.add_argument('--dataset', type=str, default='ImageNet')
@@ -113,8 +116,10 @@ if __name__ == '__main__':
 
     # Writing the parsing arguments into a logging file.
     log_file = os.path.join(config.log_dir, 'log_arguments.txt')
-    with open(log_file, "w") as log_arg:
-        log_arg.write(str(config))
-    print("[INFO] Parameters saved into '{}'.".format(log_file))
+    with open(log_file, mode="a") as log_arg:
+        log_arg.write(f"Training session created on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.\n")
+        log_arg.write(f"{str(config)}\n")
+        log_arg.write(f"---\n")
+    print("[ INFO ] Parameters saved into '{}'.".format(log_file))
     
     main(config)
