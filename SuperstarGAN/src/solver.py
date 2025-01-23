@@ -3,6 +3,8 @@ import sys
 import time
 import datetime
 import numpy as np
+import tensorflow as tf
+
 import torch
 import torch.nn.functional as F
 from torchvision.utils import save_image
@@ -50,7 +52,7 @@ class Solver(object):
         self.c_beta1 = config.c_beta1
         self.resume_iters = config.resume_iters
         self.selected_attrs = config.selected_attrs
-        self.delta = 1.05
+        self.nadir_slack = 1.05 # This value can range between 1.1 and 1.05.
         self.disc_weights = [0.7, 0.3]
 
         # Test configurations.
@@ -74,8 +76,8 @@ class Solver(object):
 
         # Build the model and tensorboard.
         self.build_model()
-        # if self.use_tensorboard:
-        #     self.build_tensorboard()
+        if self.use_tensorboard:
+            self.build_tensorboard()
 
     # ** Edited by @joseareia on 2024/12/13 **
     # Changelog: Added the list of discriminators and refactored the optimizers call for each discriminator.
@@ -87,9 +89,8 @@ class Solver(object):
         
         # Add a list of discriminators
         self.discriminators = []
-        for i in range(2):
-            self.discriminators.append(Discriminator(self.image_size, self.d_conv_dim, self.c_dim, self.d_repeat_num))
-            self.discriminators.append(AdversarialDiscriminator(self.image_size, self.d_conv_dim, self.c_dim, self.d_repeat_num))
+        self.discriminators.append(Discriminator(self.image_size, self.d_conv_dim, self.c_dim, self.d_repeat_num))
+        self.discriminators.append(AdversarialDiscriminator(self.image_size, self.d_conv_dim, self.c_dim, self.d_repeat_num))
         
         # Create the classifier
         self.C = Classifier(self.image_size, self.c_conv_dim, self.c_dim, self.c_repeat_num)
@@ -120,7 +121,7 @@ class Solver(object):
 
     def restore_model(self, resume_iters):
         """Restore the trained generator and discriminator."""
-        print('[INFO] Loading the trained models from step {}.'.format(resume_iters))
+        print('[ INFO ] Loading the trained models from step {}.'.format(resume_iters))
 
         G_path = os.path.join(self.model_save_dir, '{}-G.ckpt'.format(resume_iters))
         D_path = os.path.join(self.model_save_dir, '{}-D.ckpt'.format(resume_iters))
@@ -129,6 +130,11 @@ class Solver(object):
         self.G.load_state_dict(torch.load(G_path, map_location=lambda storage, loc: storage, weights_only=False))
         self.D.load_state_dict(torch.load(D_path, map_location=lambda storage, loc: storage, weights_only=False))
         self.C.load_state_dict(torch.load(C_path, map_location=lambda storage, loc: storage, weights_only=False))
+
+    def build_tensorboard(self):
+        """Build a tensorboard logger."""
+        from logger import Logger
+        self.logger = Logger(self.log_dir)
 
     # ** Edited by @joseareia on 2024/12/16 **
     # Changelog: Iterate for the list of optimizers in the discriminator.
@@ -207,12 +213,12 @@ class Solver(object):
 
         # ** Edited by @joseareia on 2024/12/16 **
         # Changelog: Print the network used for train, including all the discriminators.
-        self.print_network(self.G, 'G')
+        # self.print_network(self.G, 'G')
 
-        for discriminator in self.discriminators:
-            self.print_network(discriminator, 'D')
+        # for discriminator in self.discriminators:
+        #     self.print_network(discriminator, 'D')
 
-        self.print_network(self.C, 'C') 
+        # self.print_network(self.C, 'C') 
 
         # Start training from scratch or resume training.
         start_iters = 0
@@ -221,7 +227,7 @@ class Solver(object):
             self.restore_model(self.resume_iters)
 
         # Start training.
-        print('[INFO] Training started!')
+        print('[ INFO ] Training started!')
         start_time = time.time()
         for i in range(start_iters, self.num_iters):
 
@@ -381,16 +387,12 @@ class Solver(object):
                         misclassification_score = -self.classification_loss(out_class_fake, c_trg) 
                         weighted_adversarial_losses.append(weight * misclassification_score)
 
-                # weighted_adversarial_losses = [
-                #     weight * torch.mean(discriminator(x_fake))
-                #     for weight, discriminator in zip([self.disc_weights[0], self.disc_weights[1]], self.discriminators)
-                # ]
+                # Update nadir point using the weighted adversarial losses.
+                self.update_nadir([loss.item() for loss in weighted_adversarial_losses])
+                print(f"[ DEBUG ] Nadir: {self.nadir}")
 
-                # Calculate nadir point with slack parameter delta.
-                nadir_point = self.delta * max(weighted_adversarial_losses).detach()
-
-                # Compute hypervolume loss.
-                hypervolume = -torch.sum(torch.stack([torch.log(nadir_point - loss) for loss in weighted_adversarial_losses]))
+                hypervolume = -torch.sum(torch.stack([torch.log(self.nadir - loss) for loss in weighted_adversarial_losses]))
+                print(f"[ DEBUG ] Hypervolume: {hypervolume}")
 
                 # Classification loss.
                 out_cls_f = self.C(x_fake)
@@ -408,7 +410,7 @@ class Solver(object):
                     hypervolume 
                     + self.lambda_rec * g_loss_rec 
                     + self.lambda_cls * c_loss_f 
-                    + nadir_point 
+                    + self.nadir 
                     + self.lambda_perturbation * perturbation_penalty
                 )
 
@@ -421,9 +423,8 @@ class Solver(object):
                 loss['G/loss_hypervolume'] = hypervolume.item()
                 loss['G/loss_rec'] = self.lambda_rec * g_loss_rec.item()
                 loss['G/loss_cls'] = self.lambda_cls * c_loss_f.item()
-                loss['G/nadir_point'] = nadir_point.item()
+                loss['G/nadir'] = self.nadir
                 loss['G/perturbation_penalty'] = self.lambda_perturbation * perturbation_penalty.item()
-
 
             # =================================================================================== #
             #                                 3. Miscellaneous                                    #
@@ -433,7 +434,7 @@ class Solver(object):
             if (i+1) % self.log_step == 0:
                 et = time.time() - start_time
                 et = str(datetime.timedelta(seconds=et))[:-7]
-                log = "Elapsed [{}], Iteration [{}/{}]".format(et, i+1, self.num_iters)
+                log = "[{}/{}] Elapsed [{}]".format(i+1, self.num_iters, et)
                 for tag, value in loss.items():
                     log += ", {}: {:.4f}".format(tag, value)
                 print(log)
@@ -447,7 +448,7 @@ class Solver(object):
                     x_concat = torch.cat(x_fake_list, dim=3)
                     sample_path = os.path.join(self.sample_dir, '{}-images.jpg'.format(i+1))
                     save_image(self.denorm(x_concat.data.cpu()), sample_path, nrow=1, padding=0)
-                    print("[INFO] Saving images into '{}'.".format(sample_path))
+                    print("[ INFO ] Saving images into '{}'.".format(sample_path))
 
             # ** Edited by @joseareia on 2024/12/16 **
             # Changelog: Update the method of saving models to include all the discriminator models.
@@ -464,7 +465,7 @@ class Solver(object):
                     D_path = os.path.join(self.model_save_dir, '{}-D{}.ckpt'.format(i+1, d_idx))
                     torch.save(discriminator.state_dict(), D_path)
 
-                print("[INFO] Saving checkpoints into '{}'".format(self.model_save_dir))
+                print("[ INFO ] Saving checkpoints into '{}'".format(self.model_save_dir))
 
             # Decay learning rates.
             if (i+1) % self.lr_update_step == 0 and (i+1) > (self.num_iters - self.num_iters_decay):
@@ -503,6 +504,10 @@ class Solver(object):
                     save_image(self.denorm(image), result_path)
                     print(f'Image {filename[i]} saved.')
 
+    # ** Created by @joseareia 2025/01/23 **
+    def update_nadir(self, losses_list):
+            # Update nadir point dynamically with slack and a small constant for stability.
+            self.nadir = float(np.max(losses_list) * self.nadir_slack + 1e-8)
 
 class HingeLoss(torch.nn.Module):
     def __init__(self):
