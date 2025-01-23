@@ -169,7 +169,7 @@ def adversarial_classifier(img_original_path, img_adversarial_path, img_to_class
             outputs = model(img)
             _, preds = torch.max(outputs, 1)
         
-        torch.cuda.empty_cache()
+        torch.cuda.empty_cache() 
         return preds[0]+1
 
     # Get the device available to use.
