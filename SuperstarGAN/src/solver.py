@@ -52,7 +52,7 @@ class Solver(object):
         self.c_beta1 = config.c_beta1
         self.resume_iters = config.resume_iters
         self.selected_attrs = config.selected_attrs
-        self.nadir_slack = 1.05 # This value can range between 1.1 and 1.05.
+        self.nadir_slack = config.nadir_slack
         self.disc_weights = [0.7, 0.3]
 
         # Test configurations.
