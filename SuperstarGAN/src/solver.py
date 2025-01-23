@@ -356,9 +356,8 @@ class Solver(object):
             # )
 
             # Logging the general discriminator loss components.
-            loss['D_general/loss_real'] = (self.disc_weights[0] * losses_real[0].item())
-            loss['D_general/loss_fake'] = (self.disc_weights[0] * losses_fake[0].item() + self.disc_weights[1] * losses_fake[1].item())
-            loss['D_general/loss_gp'] = (self.disc_weights[0] * losses_gp[0].item())
+            loss['D/Loss_Real'] = (self.disc_weights[0] * losses_real[0].item())
+            loss['D/Loss_Fake'] = (self.disc_weights[0] * losses_fake[0].item() + self.disc_weights[1] * losses_fake[1].item())
 
 
             # =================================================================================== #
@@ -389,10 +388,9 @@ class Solver(object):
 
                 # Update nadir point using the weighted adversarial losses.
                 self.update_nadir([loss.item() for loss in weighted_adversarial_losses])
-                print(f"[ DEBUG ] Nadir: {self.nadir}")
 
-                hypervolume = -torch.sum(torch.stack([torch.log(self.nadir - loss) for loss in weighted_adversarial_losses]))
-                print(f"[ DEBUG ] Hypervolume: {hypervolume}")
+                # Hypervolume calculation.
+                hypervolume = -torch.sum(torch.stack([torch.log(torch.clamp(self.nadir - loss, min=1e-8)) for loss in weighted_adversarial_losses]))
 
                 # Classification loss.
                 out_cls_f = self.C(x_fake)
@@ -420,11 +418,11 @@ class Solver(object):
                 self.g_optimizer.step()
 
                 # Logging for generator losses.
-                loss['G/loss_hypervolume'] = hypervolume.item()
-                loss['G/loss_rec'] = self.lambda_rec * g_loss_rec.item()
-                loss['G/loss_cls'] = self.lambda_cls * c_loss_f.item()
-                loss['G/nadir'] = self.nadir
-                loss['G/perturbation_penalty'] = self.lambda_perturbation * perturbation_penalty.item()
+                loss['G/Hypervolume'] = hypervolume.item()
+                loss['G/Loos_Rec'] = self.lambda_rec * g_loss_rec.item()
+                loss['G/Loss_Cls'] = self.lambda_cls * c_loss_f.item()
+                loss['G/Nadir'] = self.nadir
+                loss['G/Perturbation'] = self.lambda_perturbation * perturbation_penalty.item()
 
             # =================================================================================== #
             #                                 3. Miscellaneous                                    #
@@ -434,7 +432,7 @@ class Solver(object):
             if (i+1) % self.log_step == 0:
                 et = time.time() - start_time
                 et = str(datetime.timedelta(seconds=et))[:-7]
-                log = "[{}/{}] Elapsed [{}]".format(i+1, self.num_iters, et)
+                log = "Epochs [{}/{}] [{}]".format(i+1, self.num_iters, et)
                 for tag, value in loss.items():
                     log += ", {}: {:.4f}".format(tag, value)
                 print(log)
