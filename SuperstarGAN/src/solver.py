@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from torchvision.utils import save_image
 from model import Generator
 from model import Discriminator
+from model import AdversarialDiscriminator
 from model import Classifier
 from PIL import Image
 
@@ -49,6 +50,7 @@ class Solver(object):
         self.resume_iters = config.resume_iters
         self.selected_attrs = config.selected_attrs
         self.delta = 1.05
+        self.disc_weights = [0.7, 0.3]
 
         # Test configurations.
         self.test_iters = config.test_iters
@@ -74,7 +76,6 @@ class Solver(object):
         # if self.use_tensorboard:
         #     self.build_tensorboard()
 
-
     # ** Edited by @joseareia on 2024/12/13 **
     # Changelog: Added the list of discriminators and refactored the optimizers call for each discriminator.
     def build_model(self):
@@ -86,8 +87,8 @@ class Solver(object):
         # Add a list of discriminators
         self.discriminators = []
         for i in range(2):
-            discriminator = Discriminator(self.image_size, self.d_conv_dim, self.c_dim, self.d_repeat_num)
-            self.discriminators.append(discriminator)
+            self.discriminators.append(Discriminator(self.image_size, self.d_conv_dim, self.c_dim, self.d_repeat_num))
+            self.discriminators.append(AdversarialDiscriminator(self.image_size, self.d_conv_dim, self.c_dim, self.d_repeat_num))
         
         # Create the classifier
         self.C = Classifier(self.image_size, self.c_conv_dim, self.c_dim, self.c_repeat_num)
@@ -264,7 +265,7 @@ class Solver(object):
 
             # =================================================================================== #
             #                             2-0. Train the Classifier                               #
-            # =================================================================================== #
+            # =================================================================================== # 
 
             # Compute loss with real images.
             out_cls = self.C(x_real_class)
@@ -280,33 +281,51 @@ class Solver(object):
             loss['C/loss'] = c_loss.item()
 
             # =================================================================================== #
-            #                             2-1. Train the discriminator                            #
+            #                             2-1. Train the discriminators                           #
             # =================================================================================== #
 
-            # ** Edited by @joseareia on 2024/12/16 **
-            # Changelog: Train a list of various discriminators.
+            # ** Edited by @joseareia **
+            # Changelog (2024/12/16): Train a list of various discriminators.
+            # Changelog (2025/01/20): Add the adversarial discriminator training logic.
             losses_real, losses_fake, losses_gp = [], [], []
             for d_idx, discriminator in enumerate(self.discriminators):
-                # Compute loss with real images.
-                out_src = discriminator(x_real)
-                d_loss_real = torch.mean(F.relu(1.0 - out_src))
-                losses_real.append(d_loss_real)
+                # Original discriminator. The logic remains unchanged from the original code.
+                if d_idx == 0:
+                    # Compute loss with real images.
+                    out_src = discriminator(x_real)
+                    d_loss_real = torch.mean(F.relu(1.0 - out_src))
+                    losses_real.append(d_loss_real)
 
-                # Compute loss with fake images.
-                x_fake = self.G(x_real, c_trg)
-                out_src = discriminator(x_fake.detach())
-                d_loss_fake = torch.mean(F.relu(1.0 + out_src))
-                losses_fake.append(d_loss_fake)
+                    # Compute loss with fake images.
+                    x_fake = self.G(x_real, c_trg)
+                    out_src = discriminator(x_fake.detach())
+                    d_loss_fake = torch.mean(F.relu(1.0 + out_src))
+                    losses_fake.append(d_loss_fake)
 
-                # Compute loss for gradient penalty.
-                alpha = torch.rand(x_real.size(0), 1, 1, 1).to(self.device)
-                x_hat = (alpha * x_real.data + (1 - alpha) * x_fake.data).requires_grad_(True)
-                out_src = discriminator(x_hat)
-                d_loss_gp = self.gradient_penalty(out_src, x_hat)
-                losses_gp.append(d_loss_gp)
+                    # Compute loss for gradient penalty.
+                    alpha = torch.rand(x_real.size(0), 1, 1, 1).to(self.device)
+                    x_hat = (alpha * x_real.data + (1 - alpha) * x_fake.data).requires_grad_(True)
+                    out_src = discriminator(x_hat)
+                    d_loss_gp = self.gradient_penalty(out_src, x_hat)
+                    losses_gp.append(d_loss_gp)
+                else:
+                    # Adversarial discriminator logic.
+                    x_fake = self.G(x_real, c_trg)
+
+                    # Compute classification loss for adversarial misclassification.
+                    out_class_real = discriminator(x_real_class)
+                    out_class_fake = discriminator(x_fake.detach())
+
+                    d_loss_real = self.classification_loss(out_class_real, label_org_class)
+                    d_loss_fake = -self.classification_loss(out_class_fake, label_trg)  # This line will encourage fake misclassification.
+
+                    # Record losses for the adversarial discriminator.
+                    losses_real.append(d_loss_real)
+                    losses_fake.append(d_loss_fake)
+                    losses_gp.append(torch.tensor(0.0).to(self.device))
 
                 # Compute total loss for the current discriminator.
-                d_loss = d_loss_real + d_loss_fake + self.lambda_gp * d_loss_gp
+                d_loss = d_loss_real + d_loss_fake + self.lambda_gp * losses_gp[d_idx]
 
                 # Backward and optimize.
                 self.reset_grad()
@@ -320,9 +339,9 @@ class Solver(object):
             # )
 
             # Logging the general discriminator loss components.
-            loss['D_general/loss_real'] = (0.7 * losses_real[0].item() + 0.3 * losses_real[1].item())
-            loss['D_general/loss_fake'] = (0.7 * losses_fake[0].item() + 0.3 * losses_fake[1].item())
-            loss['D_general/loss_gp'] = (0.7 * losses_gp[0].item() + 0.3 * losses_gp[1].item())
+            loss['D_general/loss_real'] = (self.disc_weights[0] * losses_real[0].item() + self.disc_weights[1] * losses_real[1].item())
+            loss['D_general/loss_fake'] = (self.disc_weights[0] * losses_fake[0].item() + self.disc_weights[1] * losses_fake[1].item())
+            loss['D_general/loss_gp'] = (self.disc_weights[0] * losses_gp[0].item() + self.disc_weights[1] * losses_gp[1].item())
 
 
             # =================================================================================== #
@@ -338,7 +357,7 @@ class Solver(object):
                 # Compute adversarial losses weighted by discriminator contributions.
                 weighted_adversarial_losses = [
                     weight * torch.mean(discriminator(x_fake))
-                    for weight, discriminator in zip([0.7, 0.3], self.discriminators)
+                    for weight, discriminator in zip([self.disc_weights[0], self.disc_weights[1]], self.discriminators)
                 ]
 
                 # Calculate nadir point with slack parameter delta.
