@@ -61,7 +61,7 @@ class Generator(nn.Module):
 
 class Discriminator(nn.Module):
     """Discriminator network with PatchGAN."""
-    def __init__(self, image_size=128, conv_dim=64, c_dim=5, repeat_num=6):
+    def __init__(self, image_size=128, conv_dim=64, num_classes=5, repeat_num=6):
         super(Discriminator, self).__init__()
         layers = []
         layers.append(torch.nn.utils.spectral_norm(nn.Conv2d(3, conv_dim, kernel_size=4, stride=2, padding=1)))
@@ -81,6 +81,44 @@ class Discriminator(nn.Module):
         h = self.main(x)
         out_src = self.conv1(h)
         return out_src
+    
+# ** Edited by @joseareia on 2025/01/12 **
+class AdversarialDiscriminator(nn.Module):
+    """Classifier Discriminator to detect adversarial misclassifications."""
+    def __init__(self, image_size=128, conv_dim=64, num_classes=5, repeat_num=6):
+        """
+        A classifier-based discriminator for adversarial training.
+        
+        Args:
+            image_size (int): Size of the input images.
+            conv_dim (int): Number of base channels for convolution layers.
+            num_classes (int): Number of classification labels.
+            repeat_num (int): Number of downsampling layers.
+        """
+        super(AdversarialDiscriminator, self).__init__()
+        layers = []
+        layers.append(torch.nn.utils.spectral_norm(nn.Conv2d(3, conv_dim, kernel_size=4, stride=2, padding=1)))
+        layers.append(nn.LeakyReLU(0.01))
+
+        curr_dim = conv_dim
+        for i in range(1, repeat_num):
+            layers.append(torch.nn.utils.spectral_norm(nn.Conv2d(curr_dim, curr_dim * 2, kernel_size=4, stride=2, padding=1)))
+            layers.append(nn.LeakyReLU(0.01))
+            curr_dim *= 2
+        
+        kernel_size = int(image_size / np.power(2, repeat_num))
+        self.main = nn.Sequential(*layers)
+        self.fc = torch.nn.utils.spectral_norm(nn.Linear(curr_dim * kernel_size * kernel_size, num_classes))
+
+    def forward(self, x):
+        """Forward pass for the AdversarialDiscriminator."""
+        # Pass the input through the convolutional layers.
+        h = self.main(x)
+        
+        # Flatten the output and apply the final classification layer.
+        h = h.view(h.size(0), -1)
+        out_class = self.fc(h)
+        return out_class
     
 class Classifier(nn.Module):
     """Discriminator network with PatchGAN."""
@@ -104,4 +142,3 @@ class Classifier(nn.Module):
         h = self.main(x)
         out_cls = self.conv2(h)
         return out_cls.view(out_cls.size(0), out_cls.size(1))
-    
