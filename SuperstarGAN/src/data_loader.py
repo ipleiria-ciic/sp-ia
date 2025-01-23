@@ -48,7 +48,7 @@ class ImageNet(data.Dataset):
             else:
                 self.train_dataset.append([filename, label])
 
-        print("[INFO] Finished processing the 'ImageNet' dataset.")
+        print("[ INFO ] Finished processing the 'ImageNet' dataset.")
     
     def __getitem__(self, index):       
         """Return one image and its corresponding attribute label."""
