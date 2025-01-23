@@ -34,6 +34,7 @@ class Solver(object):
         self.lambda_cls = config.lambda_cls
         self.lambda_rec = config.lambda_rec
         self.lambda_gp = config.lambda_gp
+        self.lambda_perturbation = config.lambda_perturbation
 
         # Training configurations.
         self.dataset = config.dataset
@@ -287,6 +288,7 @@ class Solver(object):
             # ** Edited by @joseareia **
             # Changelog (2024/12/16): Train a list of various discriminators.
             # Changelog (2025/01/20): Add the adversarial discriminator training logic.
+            # Changelog (2025/01/23): Refactor the missclassification loss and add perturbation penalty.
             losses_real, losses_fake, losses_gp = [], [], []
             for d_idx, discriminator in enumerate(self.discriminators):
                 # Original discriminator. The logic remains unchanged from the original code.
@@ -316,49 +318,73 @@ class Solver(object):
                     out_class_real = discriminator(x_real_class)
                     out_class_fake = discriminator(x_fake.detach())
 
-                    d_loss_real = self.classification_loss(out_class_real, label_org_class)
-                    d_loss_fake = -self.classification_loss(out_class_fake, label_trg)  # This line will encourage fake misclassification.
+                    # Loss to penalise correct classification for fake images.
+                    misclassification_loss = -self.classification_loss(out_class_fake, label_trg)
+                    
+                    # Perturbation loss to minimize the difference between real and fake images.
+                    perturbation_loss = torch.mean((x_real - x_fake) ** 2)
 
-                    # Record losses for the adversarial discriminator.
-                    losses_real.append(d_loss_real)
-                    losses_fake.append(d_loss_fake)
-                    losses_gp.append(torch.tensor(0.0).to(self.device))
+                    # Weighted combination of the two losses.
+                    d_loss = misclassification_loss + self.lambda_perturbation * perturbation_loss
 
-                # Compute total loss for the current discriminator.
-                d_loss = d_loss_real + d_loss_fake + self.lambda_gp * losses_gp[d_idx]
+                    losses_real.append(torch.tensor(0.0).to(self.device))   # No real loss for classifier discriminator.
+                    losses_fake.append(misclassification_loss)              # Adversarial misclassification loss.
+                    losses_gp.append(torch.tensor(0.0).to(self.device))     # No gradient penalty for classifier discriminator.
+
+                if d_idx == 0:
+                    # Standard discriminator: include real, fake, and gradient penalty.
+                    d_loss = losses_real[d_idx] + losses_fake[d_idx] + self.lambda_gp * losses_gp[d_idx]
+                else:
+                    # Adversarial classifier discriminator: already computed as `d_loss`.
+                    pass
 
                 # Backward and optimize.
                 self.reset_grad()
                 d_loss.backward()
                 self.d_optimizers[d_idx].step()
 
-            # Weighted general loss for all discriminators.
+            # Weighted general loss for all discriminators (if needed for logging).
             # d_loss_general = (
-            #     0.7 * (losses_real[0] + losses_fake[0] + self.lambda_gp * losses_gp[0]) +
-            #     0.3 * (losses_real[1] + losses_fake[1] + self.lambda_gp * losses_gp[1])
+            #     self.disc_weights[0] * (losses_real[0] + losses_fake[0] + self.lambda_gp * losses_gp[0]) +
+            #     self.disc_weights[1] * (losses_fake[1])
             # )
 
             # Logging the general discriminator loss components.
-            loss['D_general/loss_real'] = (self.disc_weights[0] * losses_real[0].item() + self.disc_weights[1] * losses_real[1].item())
+            loss['D_general/loss_real'] = (self.disc_weights[0] * losses_real[0].item())
             loss['D_general/loss_fake'] = (self.disc_weights[0] * losses_fake[0].item() + self.disc_weights[1] * losses_fake[1].item())
-            loss['D_general/loss_gp'] = (self.disc_weights[0] * losses_gp[0].item() + self.disc_weights[1] * losses_gp[1].item())
+            loss['D_general/loss_gp'] = (self.disc_weights[0] * losses_gp[0].item())
 
 
             # =================================================================================== #
             #                               2-2. Train the generator                              #
             # =================================================================================== #
 
-            # ** Edited by @joseareia on 2024/12/16 **
-            # Changelog: Update the train of the generator to include all the losses from the all discriminators.
+            # ** Edited by @joseareia **
+            # Changelog (2024/12/16): Update the train of the generator to include all the losses from the all discriminators.
+            # Changelog (2025/01/21): Add perturbation lambda and penalty values to the generator calculation loss.
+            # Changelog (2025/01/25): Refactor the weighted adversarial losses by both discriminators.
             if (i+1) % self.n_critic == 0:
                 # Generate fake images.
                 x_fake = self.G(x_real, c_trg)
 
                 # Compute adversarial losses weighted by discriminator contributions.
-                weighted_adversarial_losses = [
-                    weight * torch.mean(discriminator(x_fake))
-                    for weight, discriminator in zip([self.disc_weights[0], self.disc_weights[1]], self.discriminators)
-                ]
+                weighted_adversarial_losses = []
+                for d_idx, (weight, discriminator) in enumerate(zip(self.disc_weights, self.discriminators)):
+                    if d_idx == 0:
+                         # Standard discriminator: adversarial loss based on raw output.
+                        weighted_adversarial_losses.append(weight * torch.mean(discriminator(x_fake)))
+                    else:
+                        # Adversarial classifier discriminator: focus on target class misclassification.
+                        out_class_fake = discriminator(x_fake)
+                
+                        # This is negative because the generator wants to maximize this loss
+                        misclassification_score = -self.classification_loss(out_class_fake, c_trg) 
+                        weighted_adversarial_losses.append(weight * misclassification_score)
+
+                # weighted_adversarial_losses = [
+                #     weight * torch.mean(discriminator(x_fake))
+                #     for weight, discriminator in zip([self.disc_weights[0], self.disc_weights[1]], self.discriminators)
+                # ]
 
                 # Calculate nadir point with slack parameter delta.
                 nadir_point = self.delta * max(weighted_adversarial_losses).detach()
@@ -374,8 +400,17 @@ class Solver(object):
                 x_reconst = self.G(x_fake, c_org)
                 g_loss_rec = torch.mean(torch.abs(x_real - x_reconst))
 
+                # Perturbation penalty (minimising changes to real images).
+                perturbation_penalty = torch.mean((x_real - x_fake) ** 2)
+
                 # Combine all generator losses.
-                g_loss = hypervolume + self.lambda_rec * g_loss_rec + self.lambda_cls * c_loss_f + nadir_point
+                g_loss = (
+                    hypervolume 
+                    + self.lambda_rec * g_loss_rec 
+                    + self.lambda_cls * c_loss_f 
+                    + nadir_point 
+                    + self.lambda_perturbation * perturbation_penalty
+                )
 
                 # Backward and optimize.
                 self.reset_grad()
@@ -387,6 +422,7 @@ class Solver(object):
                 loss['G/loss_rec'] = self.lambda_rec * g_loss_rec.item()
                 loss['G/loss_cls'] = self.lambda_cls * c_loss_f.item()
                 loss['G/nadir_point'] = nadir_point.item()
+                loss['G/perturbation_penalty'] = self.lambda_perturbation * perturbation_penalty.item()
 
 
             # =================================================================================== #
