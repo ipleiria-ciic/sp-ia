@@ -70,6 +70,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda_cls', type=float, default=0.25)  
     parser.add_argument('--lambda_rec', type=float, default=1.3)
     parser.add_argument('--lambda_gp', type=float, default=1)
+    parser.add_argument('--lambda_perturbation', type=float, default=0.1)
                                             
     # Training configuration.
     parser.add_argument('--dataset', type=str, default='ImageNet')
