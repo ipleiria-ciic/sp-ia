@@ -63,21 +63,21 @@ if __name__ == '__main__':
     parser.add_argument('--c_dim', type=int, default=40)
     parser.add_argument('--crop_size', type=int, default=178)
     parser.add_argument('--image_size', type=int, default=128)
-    parser.add_argument('--g_conv_dim', type=int, default=16)
-    parser.add_argument('--d_conv_dim', type=int, default=16)
-    parser.add_argument('--c_conv_dim', type=int, default=16) 
+    parser.add_argument('--g_conv_dim', type=int, default=8)
+    parser.add_argument('--d_conv_dim', type=int, default=8)
+    parser.add_argument('--c_conv_dim', type=int, default=8) 
     parser.add_argument('--g_repeat_num', type=int, default=6)
     parser.add_argument('--d_repeat_num', type=int, default=6)
     parser.add_argument('--c_repeat_num', type=int, default=6)     
     parser.add_argument('--lambda_cls', type=float, default=0.25)  
     parser.add_argument('--lambda_rec', type=float, default=1.3)
     parser.add_argument('--lambda_gp', type=float, default=1)
-    parser.add_argument('--lambda_perturbation', type=float, default=0.1)
-    parser.add_argument('--nadir_slack', type=float, default=1.05) # Can range between 1.1 and 1.05.
+    parser.add_argument('--lambda_perturbation', type=float, default=0.5)
+    parser.add_argument('--nadir_slack', type=float, default=1.1) # Can range between 1.1 and 1.05.
                                             
     # Training configuration.
     parser.add_argument('--dataset', type=str, default='ImageNet')
-    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--batch_size', type=int, default=6)
     parser.add_argument('--num_iters', type=int, default=500000)
     parser.add_argument('--num_iters_decay', type=int, default=100000)
     parser.add_argument('--g_lr', type=float, default=0.0001)
