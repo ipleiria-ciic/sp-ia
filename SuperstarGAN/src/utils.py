@@ -4,9 +4,9 @@ import warnings
 import numpy as np
 import alive_progress
 
-from PIL import Image
 from datetime import datetime
 from scipy.linalg import sqrtm
+from PIL import Image, ImageChops
 from statistics import mean, harmonic_mean, median
 
 import torch
@@ -121,19 +121,9 @@ def img_transform(input_folder, output_folder, threshold):
 
     def remove_black_border(image_path, output_path):
         with Image.open(image_path) as image:
-            gray_image = image.convert("L")
-            np_image = np.array(gray_image)
-
-            mask = np_image > threshold
-            coords = np.argwhere(mask)
-
-            if coords.size > 0:
-                x0, y0 = coords.min(axis=0)
-                x1, y1 = coords.max(axis=0) + 1
-                cropped_image = image.crop((y0, x0, y1, x1))
-                cropped_image.save(output_path)
-            else:
-                image.save(output_path)
+            width, height = image.size
+            new_img = image.crop((threshold, threshold, width - threshold, height - threshold))
+            new_img.save(output_path)
     
     total_files = sum(1 for filename in os.listdir(input_folder) if filename.endswith(".jpg"))
 
