@@ -3,6 +3,7 @@ import sys
 import time
 import datetime
 import numpy as np
+import alive_progress
 
 # Uncomment to use tensorboard
 # import tensorflow as tf
@@ -126,11 +127,17 @@ class Solver(object):
         print('[ INFO ] Loading the trained models from step {}.'.format(resume_iters))
 
         G_path = os.path.join(self.model_save_dir, '{}-G.ckpt'.format(resume_iters))
-        D_path = os.path.join(self.model_save_dir, '{}-D.ckpt'.format(resume_iters))
+        D0_path = os.path.join(self.model_save_dir, '{}-D0.ckpt'.format(resume_iters))
+        D1_path = os.path.join(self.model_save_dir, '{}-D1.ckpt'.format(resume_iters))
         C_path = os.path.join(self.model_save_dir, '{}-C.ckpt'.format(resume_iters))
 
         self.G.load_state_dict(torch.load(G_path, map_location=lambda storage, loc: storage, weights_only=False))
-        self.D.load_state_dict(torch.load(D_path, map_location=lambda storage, loc: storage, weights_only=False))
+        
+        # ** Edited by @joseareia **
+        # Changelog (2025/01/30): Load the trained model for each discriminator.
+        self.discriminators[0].load_state_dict(torch.load(D0_path, map_location=lambda storage, loc: storage, weights_only=False))
+        self.discriminators[1].load_state_dict(torch.load(D1_path, map_location=lambda storage, loc: storage, weights_only=False))
+       
         self.C.load_state_dict(torch.load(C_path, map_location=lambda storage, loc: storage, weights_only=False))
 
     def build_tensorboard(self):
@@ -483,26 +490,30 @@ class Solver(object):
         # Set data loader.
         data_loader = self.imagenet_loader
 
+        # ** Edited by @joseareia **
+        # Changelog (2024/01/30): Add alive progress animation.
         with torch.no_grad():
-            for i, (x_real, c_org, filename) in enumerate(data_loader):
-                # Prepare input images and target domain labels.
-                x_real = x_real.to(self.device)
+            with alive_progress.alive_bar(len(data_loader), title=f"[ INFO ] Extracting images", bar='classic', spinner=None) as bar:
+                for i, (x_real, c_org, filename) in enumerate(data_loader):
+                    # Prepare input images and target domain labels.
+                    x_real = x_real.to(self.device)
 
-                # Create class target lists.
-                c_trg_list = self.create_labels(c_org, self.c_dim, self.selected_attrs)
+                    # Create class target lists.
+                    c_trg_list = self.create_labels(c_org, self.c_dim, self.selected_attrs)
 
-                # Translate images.
-                x_fake_list = []
-                
-                for c_trg in c_trg_list:
-                    x_fake_list.append(self.G(x_real, c_trg))
-                    break # Only the first attribute
+                    # Translate images.
+                    x_fake_list = []
+                    
+                    for c_trg in c_trg_list:
+                        x_fake_list.append(self.G(x_real, c_trg))
+                        break # Only the first attribute
 
-                for i, x_fake in enumerate(x_fake_list[0]):
-                    result_path = os.path.join(self.result_dir, f"{filename[i]}")
-                    image = x_fake.cpu()
-                    save_image(self.denorm(image), result_path)
-                    print(f'Image {filename[i]} saved.')
+                    for i, x_fake in enumerate(x_fake_list[0]):
+                        result_path = os.path.join(self.result_dir, f"{filename[i]}")
+                        image = x_fake.cpu()
+                        save_image(self.denorm(image), result_path)
+                    
+                    bar()
 
     # ** Created by @joseareia 2025/01/23 **
     def update_nadir(self, losses_list):
