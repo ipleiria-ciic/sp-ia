@@ -73,3 +73,21 @@ Original accuracy classification: 80.14%
 Adversarial accuracy classification (in a total of 1602 images): 20.14%
 Total adversarial images that fooled the classifier: 364.
 ---
+Classification created on: 2025-01-30 11:50:01.
+Total images classified: 1999.
+Original accuracy classification: 80.14%
+Adversarial accuracy classification (in a total of 1602 images): 28.28%
+Total adversarial images that fooled the classifier: 453.
+---
+Classification created on: 2025-01-30 15:12:40.
+Total images classified: 1999.
+Original accuracy classification: 80.14%
+Adversarial accuracy classification (in a total of 1602 images): 17.54%
+Total adversarial images that fooled the classifier: 281.
+---
+Classification created on: 2025-01-30 15:30:22.
+Total images classified: 1999.
+Original accuracy classification: 80.14%
+Adversarial accuracy classification (in a total of 1602 images): 30.90%
+Total adversarial images that fooled the classifier: 495.
+---
