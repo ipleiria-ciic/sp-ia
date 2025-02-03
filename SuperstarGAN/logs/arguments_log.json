@@ -48,7 +48,8 @@
         "log_step": 10,
         "sample_step": 1000,
         "model_save_step": 10000,
-        "lr_update_step": 1000
+        "lr_update_step": 1000,
+        "id": 1
     },
     {
         "training_session": "2025-02-03 14:52:49",
