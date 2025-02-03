@@ -206,15 +206,15 @@ def adversarial_classifier(img_original_path, img_adversarial_path, img_to_class
                 # continue
 
     # Create log file with the following information: datetime, total_images, acc_original and acc_adversarial.
-    os.makedirs(log_path, exist_ok=True)
-    txt_class_path = os.path.join(log_path, "log.txt")
-    with open(txt_class_path, mode="a") as file:
-        file.write(f"\nClassification created on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.\n")
-        file.write(f"Total images classified: {total_images}.\n")
-        file.write(f"Original accuracy classification: {((acc_original*100)/total_images):.2f}%\n")
-        file.write(f"Adversarial accuracy classification (in a total of {acc_original} images): {((acc_adversarial*100)/acc_original):.2f}%\n")
-        file.write(f"Total adversarial images that fooled the classifier: {acc_adversarial}.\n")
-        file.write(f"---")
+    # os.makedirs(log_path, exist_ok=True)
+    # txt_class_path = os.path.join(log_path, "log.txt")
+    # with open(txt_class_path, mode="a") as file:
+    #     file.write(f"\nClassification created on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.\n")
+    #     file.write(f"Total images classified: {total_images}.\n")
+    #     file.write(f"Original accuracy classification: {((acc_original*100)/total_images):.2f}%\n")
+    #     file.write(f"Adversarial accuracy classification (in a total of {acc_original} images): {((acc_adversarial*100)/acc_original):.2f}%\n")
+    #     file.write(f"Total adversarial images that fooled the classifier: {acc_adversarial}.\n")
+    #     file.write(f"---")
 
     # print(f"[ INFO ] Classification were written in '{txt_class_path}'.")
     torch.cuda.empty_cache()
@@ -224,7 +224,7 @@ def adversarial_classifier(img_original_path, img_adversarial_path, img_to_class
     acc_original = (acc_original*100)/total_images
     acc_adversarial = (acc_adversarial*100)/len_original
 
-    return len_original, len_adversarial, acc_original, acc_adversarial
+    return total_images, len_original, len_adversarial, acc_original, acc_adversarial
 
 # Function to compute activations for an entire DataLoader.
 def get_activations(data_loader, model, device, title):
