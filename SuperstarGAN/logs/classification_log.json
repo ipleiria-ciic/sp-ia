@@ -1,0 +1,24 @@
+[
+    {
+        "classification_session": "2025-01-30 11:50:01",
+        "validation_images": 1999,
+        "adversarial_images": 1602,
+        "fooled_images": 495,
+        "original_accuracy": 80.14,
+        "adversarial_accuracy": 30.90,
+        "fid": 153.76,
+        "lpips": 0.73,
+        "id": 1
+    },
+    {
+        "classification_session": "2025-01-29 11:50:01",
+        "validation_images": 1999,
+        "adversarial_images": 1602,
+        "fooled_images": 281,
+        "original_accuracy": 80.14,
+        "adversarial_accuracy": 17.54,
+        "fid": 164.42,
+        "lpips": 0.98,
+        "id": 2
+    }
+]
