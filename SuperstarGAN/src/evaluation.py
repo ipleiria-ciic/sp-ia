@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import utils
 import dotenv
 import datetime
@@ -22,7 +23,7 @@ start_time = time.time()
 # utils.img_transform(SUPERSTARGAN_IMAGENET_RESULT, SUPERSTARGAN_IMAGENET_TRANSFORMED, threshold=20)
 
 # Classifies the images that were previously transformed.
-len_original, len_adversarial, acc_original, acc_adversarial = utils.adversarial_classifier(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_RESULT, IMAGENET_MAPPING_CLASS, CLASSIFICATION_LOGS, IMAGENET_VGG_MODEL)
+total_images, len_original, len_adversarial, acc_original, acc_adversarial = utils.adversarial_classifier(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_RESULT, IMAGENET_MAPPING_CLASS, CLASSIFICATION_LOGS, IMAGENET_VGG_MODEL)
 
 # Evaluates the FID score.
 fid_score = utils.fid(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED)
@@ -30,7 +31,34 @@ fid_score = utils.fid(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED)
 # Calculates de LPIPS similarity.
 lpips_score, aggregation = utils.calculate_lpips(IMAGENET_PATH, SUPERSTARGAN_IMAGENET_TRANSFORMED)
 
-# Printable results.
+log_data = {
+    "classification_session": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    "validation_images": total_images,
+    "adversarial_images": len_original,
+    "fooled_images": len_adversarial,
+    "original_accuracy": f"{acc_original:.2f}",
+    "adversarial_accuracy": f"{acc_adversarial:.2f}",
+    "fid": f"{fid_score:.02f}",
+    "lpips": f"{lpips_score:.02f}"
+}
+
+log_file = os.path.join("logs", "classification_log.json")
+
+if os.path.exists(log_file):
+    with open(log_file, "r+") as log_arg:
+        try:
+            data = json.load(log_arg)
+        except json.JSONDecodeError:
+            data = []
+        log_data["id"] = len(data) + 1
+        data.append(log_data) 
+        log_arg.seek(0)
+        json.dump(data, log_arg, indent=4)
+else:
+    log_data["id"] = 1
+    with open(log_file, "w") as log_arg:
+        json.dump([log_data], log_arg, indent=4)
+
 print(f"[ \033[92mRESULTS\033[0m ] Original accuracy classification: {acc_original:.2f}%")
 print(f"[ \033[92mRESULTS\033[0m ] Adversarial accuracy classification (in a total of {len_original} images): {acc_adversarial:.2f}%")
 print(f"[ \033[92mRESULTS\033[0m ] A total of {len_adversarial} adversarial images successfully fooled the classifier.")
