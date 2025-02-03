@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 import argparse
 from datetime import datetime
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # Model configuration.
-    parser.add_argument('--c_dim', type=int, default=40)
+    parser.add_argument('--c_dim', type=int, default=2)
     parser.add_argument('--crop_size', type=int, default=178)
     parser.add_argument('--image_size', type=int, default=128)
     parser.add_argument('--g_conv_dim', type=int, default=8)
@@ -74,6 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda_gp', type=float, default=1)
     parser.add_argument('--lambda_perturbation', type=float, default=0.9)
     parser.add_argument('--nadir_slack', type=float, default=1.1) # Can range between 1.1 and 1.05.
+    parser.add_argument('--disc_weights', nargs='+', default=['0.7', '0.3'])
                                             
     # Training configuration.
     parser.add_argument('--dataset', type=str, default='ImageNet')
@@ -91,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('--selected_attrs', '--list', nargs='+', default=['original', 'perturbation'])
 
     # Test configuration.
-    parser.add_argument('--test_iters', type=int, default=1000000)
+    parser.add_argument('--test_iters', type=int, default=500000)
 
     # Miscellaneous.
     parser.add_argument('--num_workers', type=int, default=0)
@@ -113,13 +115,31 @@ if __name__ == '__main__':
     parser.add_argument('--lr_update_step', type=int, default=1000)
 
     config = parser.parse_args()
+    config_dict = vars(config)
 
-    # Writing the parsing arguments into a logging file.
-    log_file = os.path.join(config.log_dir, 'log_arguments.txt')
-    with open(log_file, mode="a") as log_arg:
-        log_arg.write(f"Training session created on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.\n")
-        log_arg.write(f"{str(config)}\n")
-        log_arg.write(f"---\n")
+    # Add timestamp.
+    log_data = {
+        "training_session": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        **config_dict
+    }
+
+    log_file = os.path.join("logs", "arguments_log.json")
+
+    if os.path.exists(log_file):
+        with open(log_file, "r+") as log_arg:
+            try:
+                data = json.load(log_arg)
+            except json.JSONDecodeError:
+                data = []
+            log_data["id"] = len(data) + 1
+            data.append(log_data) 
+            log_arg.seek(0)
+            json.dump(data, log_arg, indent=4)
+    else:
+        log_data["id"] = 1
+        with open(log_file, "w") as log_arg:
+            json.dump([log_data], log_arg, indent=4)
+
     print("[ INFO ] Parameters saved into '{}'.".format(log_file))
     
     main(config)
