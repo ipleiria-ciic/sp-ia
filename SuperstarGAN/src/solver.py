@@ -56,7 +56,7 @@ class Solver(object):
         self.resume_iters = config.resume_iters
         self.selected_attrs = config.selected_attrs
         self.nadir_slack = config.nadir_slack
-        self.disc_weights = [0.7, 0.3]
+        self.disc_weights = config.disc_weights
 
         # Test configurations.
         self.test_iters = config.test_iters
